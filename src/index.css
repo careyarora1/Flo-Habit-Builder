@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@theme {
+  --color-warm-50: #fdf8f0;
+  --color-warm-100: #f5ead6;
+  --color-warm-200: #e8d5b0;
+  --color-warm-300: #d4b88a;
+  --color-warm-400: #c49a64;
+  --color-warm-500: #b07d44;
+  --color-warm-600: #8f6435;
+  --color-warm-700: #6e4d29;
+  --color-warm-800: #4d361d;
+  --color-warm-900: #2c1f11;
+
+  --color-sage-50: #f0f5f0;
+  --color-sage-100: #d4e4d4;
+  --color-sage-200: #b0ccb0;
+  --color-sage-300: #8bb48b;
+  --color-sage-400: #6b9c6b;
+  --color-sage-500: #4e7f4e;
+  --color-sage-600: #3d643d;
+  --color-sage-700: #2d4a2d;
+  --color-sage-800: #1e321e;
+  --color-sage-900: #0f190f;
+
+  --color-coral-400: #e8806a;
+  --color-coral-500: #d4654e;
+
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--color-warm-50);
+  color: var(--color-warm-900);
+}
+
+/* Typing indicator animation */
+@keyframes dot-bounce {
+  0%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-6px); }
+}
+.typing-dot {
+  display: inline-block;
+  animation: dot-bounce 1.4s infinite ease-in-out;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
