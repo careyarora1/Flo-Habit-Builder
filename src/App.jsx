@@ -6,7 +6,7 @@ import CheckIn from './pages/CheckIn'
 import DailyView from './pages/DailyView'
 import Progress from './pages/Progress'
 
-const DEV_MODE = false // Set to true to show dev toolbar locally
+const DEV_MODE = true // Keep on so instructor can step through days
 
 function DevToolbar({ onAdvance, onReset }) {
   if (!DEV_MODE) return null
