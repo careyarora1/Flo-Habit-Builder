@@ -11,8 +11,9 @@ function getDeviceId() {
   return id
 }
 
-// Load data from Supabase (returns null if not found)
+// Load data from Supabase (returns null if not found or client unavailable)
 export async function loadFromSupabase() {
+  if (!supabase) return null
   const deviceId = getDeviceId()
   const { data, error } = await supabase
     .from('user_data')
@@ -24,8 +25,9 @@ export async function loadFromSupabase() {
   return data.data
 }
 
-// Save data to Supabase (upsert)
+// Save data to Supabase (upsert) — silently skips if client unavailable
 export async function saveToSupabase(appData) {
+  if (!supabase) return
   const deviceId = getDeviceId()
   await supabase
     .from('user_data')
