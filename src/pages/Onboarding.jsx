@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import BackButton from '../components/BackButton'
+import JunkfoodGuide from '../components/JunkfoodGuide'
 
 const presets = [
   { name: 'Junk food', unit: 'junkfoods', direction: 'reduce', icon: '🍔', unitOptions: ['junkfoods', 'items', 'times'] },
@@ -18,7 +19,7 @@ export default function Onboarding({ onComplete, startStep = 0 }) {
   const [habit, setHabit] = useState({ name: '', unit: '', direction: 'reduce' })
   const [showCustom, setShowCustom] = useState(false)
   const [customUnit, setCustomUnit] = useState('')
-  const [step, setStep] = useState(1) // 1 = presets, 2 = confirm
+  const [step, setStep] = useState(1) // 1 = presets, 2 = junkfood guide (if applicable), 3 = confirm
 
   // ── Welcome screen ──────────────────────────────
   if (screen === 'welcome') {
@@ -59,7 +60,7 @@ export default function Onboarding({ onComplete, startStep = 0 }) {
                   key={p.name}
                   onClick={() => {
                     setHabit({ name: p.name, unit: p.unit, direction: p.direction })
-                    setStep(2)
+                    setStep(p.name === 'Junk food' ? 2 : 3)
                   }}
                   className="flex items-center gap-3 p-4 bg-white rounded-2xl text-left hover:shadow-md transition-all border border-warm-100"
                 >
@@ -113,7 +114,7 @@ export default function Onboarding({ onComplete, startStep = 0 }) {
                   </div>
                   <button
                     onClick={() => {
-                      if (habit.name && habit.unit) setStep(2)
+                      if (habit.name && habit.unit) setStep(3)
                     }}
                     disabled={!habit.name || !habit.unit}
                     className="w-full py-2.5 rounded-xl bg-sage-500 text-white font-medium disabled:opacity-40 disabled:cursor-not-allowed"
@@ -128,7 +129,17 @@ export default function Onboarding({ onComplete, startStep = 0 }) {
       )
     }
 
-    // Step 2: confirm unit & start
+    // Step 2: Junkfood scoring guide (only for Junk food habit)
+    if (step === 2) {
+      return (
+        <JunkfoodGuide
+          onBack={() => setStep(1)}
+          onContinue={() => setStep(3)}
+        />
+      )
+    }
+
+    // Step 3: confirm unit & start
     const preset = presets.find(p => p.name === habit.name)
     const options = preset?.unitOptions || []
 

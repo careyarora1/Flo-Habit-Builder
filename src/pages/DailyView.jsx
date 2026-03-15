@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { getTodayEntry } from '../store'
 import { getMessage } from '../messages'
+import JunkfoodGuide from '../components/JunkfoodGuide'
 
 export default function DailyView({ data, onLog, onFinalize, onActivate }) {
   const todayEntry = getTodayEntry(data)
@@ -10,6 +11,8 @@ export default function DailyView({ data, onLog, onFinalize, onActivate }) {
   const [reflectionNote, setReflectionNote] = useState('')
   const [showSuccessReflection, setShowSuccessReflection] = useState(false)
   const [successNote, setSuccessNote] = useState('')
+  const [showScoringGuide, setShowScoringGuide] = useState(false)
+  const isJunkFood = data.habit?.name === 'Junk food'
   const logged = todayEntry?.actual != null
   const finalized = todayEntry?.finalized === true
   const isBaseline = data.phase === 'baseline'
@@ -339,6 +342,24 @@ export default function DailyView({ data, onLog, onFinalize, onActivate }) {
               })}
             </div>
           </div>
+        )}
+        {/* Junkfood scoring help button */}
+        {isJunkFood && (
+          <button
+            onClick={() => setShowScoringGuide(true)}
+            className="fixed bottom-20 right-4 w-11 h-11 rounded-full bg-sage-500 text-white shadow-lg flex items-center justify-center text-lg font-bold hover:bg-sage-600 transition-colors z-40"
+            title="Scoring guide"
+          >
+            ?
+          </button>
+        )}
+
+        {/* Junkfood scoring guide modal */}
+        {showScoringGuide && (
+          <JunkfoodGuide
+            isModal
+            onBack={() => setShowScoringGuide(false)}
+          />
         )}
       </div>
     </div>
