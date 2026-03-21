@@ -163,7 +163,7 @@ function App() {
   const saveTimer = useRef(null)
 
   const devAdvance = () => { advanceDay(); forceRender(n => n + 1) }
-  const devReset = () => { resetDevMode(); forceRender(n => n + 1) }
+  const devReset = () => { resetDevMode(); setData({ habits: [], activeHabitId: null }); setAddingNew(false); forceRender(n => n + 1) }
 
   // On mount, try loading from Supabase (cloud data takes priority if it has habits)
   useEffect(() => {
@@ -217,6 +217,7 @@ function App() {
   if (data.habits.length === 0 || addingNew) {
     return <>
       <Onboarding
+        key={data.habits.length === 0 ? 'fresh' : 'add'}
         startStep={data.habits.length === 0 ? 0 : 1}
         onComplete={(habitInfo) => {
           const newData = addHabit(data, habitInfo)

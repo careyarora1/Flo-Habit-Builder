@@ -19,6 +19,7 @@ export function advanceDay() {
 
 export function resetDevMode() {
   devDateOffset = 0
+  localStorage.removeItem(STORAGE_KEY)
 }
 
 const defaultData = {

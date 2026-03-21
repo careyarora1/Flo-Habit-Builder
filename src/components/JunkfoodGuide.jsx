@@ -1,18 +1,5 @@
 import BackButton from './BackButton'
 
-const referenceTable = [
-  { food: 'Spicy McChicken', score: '1.0', reason: 'The reference point' },
-  { food: 'Bag of chips (single serve)', score: '1.0', reason: '1 serving salty snack' },
-  { food: 'Can of soda (39g sugar)', score: '3.9', reason: '39g x 0.1' },
-  { food: 'Candy bar (e.g. Snickers)', score: '2.5', reason: '~25g sugar' },
-  { food: 'Slice of pizza', score: '0.8', reason: 'Less processed than McChicken' },
-  { food: 'Donut', score: '2.0', reason: '~20g sugar + fried' },
-  { food: 'Handful of gummy bears', score: '1.5', reason: '~15g sugar' },
-  { food: 'Bowl of ice cream', score: '2.5', reason: '~25g sugar + fat' },
-  { food: 'French fries (medium)', score: '1.2', reason: 'Fried, salty, ~McChicken level' },
-  { food: 'Energy drink', score: '2.7', reason: '~27g sugar + stimulants' },
-]
-
 export default function JunkfoodGuide({ onBack, onContinue, isModal = false }) {
   const content = (
     <div className={isModal ? '' : 'min-h-screen bg-warm-50 flex flex-col items-center p-6 pt-16'}>
@@ -66,22 +53,6 @@ export default function JunkfoodGuide({ onBack, onContinue, isModal = false }) {
           <p className="text-sm text-warm-500">
             Foods with high amounts of added sugar, unhealthy fats, sodium, or highly processed ingredients that science shows are harmful in excess. If it has stuff in it that isn't good for you, give it a junkfood number based on how much "bad stuff" it contains relative to a Spicy McChicken.
           </p>
-        </div>
-
-        {/* Reference table */}
-        <p className="text-sm text-warm-400 uppercase tracking-wider mb-2">Quick reference</p>
-        <div className="bg-white rounded-2xl border border-warm-100 overflow-hidden mb-6">
-          {referenceTable.map((item, i) => (
-            <div
-              key={item.food}
-              className={`flex items-center justify-between px-4 py-2.5 text-sm ${
-                i !== referenceTable.length - 1 ? 'border-b border-warm-50' : ''
-              } ${i === 0 ? 'bg-sage-50' : ''}`}
-            >
-              <span className={`text-warm-700 ${i === 0 ? 'font-semibold' : ''}`}>{item.food}</span>
-              <span className="font-mono font-semibold text-warm-900 ml-3">{item.score}</span>
-            </div>
-          ))}
         </div>
 
         <div className="bg-warm-100/50 rounded-2xl p-4 mb-8">

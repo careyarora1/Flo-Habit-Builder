@@ -347,10 +347,10 @@ export default function DailyView({ data, onLog, onFinalize, onActivate }) {
         {isJunkFood && (
           <button
             onClick={() => setShowScoringGuide(true)}
-            className="fixed bottom-20 right-4 w-11 h-11 rounded-full bg-sage-500 text-white shadow-lg flex items-center justify-center text-lg font-bold hover:bg-sage-600 transition-colors z-40"
-            title="Scoring guide"
+            className="mt-6 flex items-center justify-center gap-1.5 text-sm text-sage-600 hover:text-sage-700 transition-colors mx-auto"
           >
-            ?
+            <span className="w-5 h-5 rounded-full border-2 border-sage-500 flex items-center justify-center text-xs font-bold">?</span>
+            How to score your food
           </button>
         )}
 

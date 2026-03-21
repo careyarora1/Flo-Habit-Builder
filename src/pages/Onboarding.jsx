@@ -4,7 +4,7 @@ import JunkfoodGuide from '../components/JunkfoodGuide'
 
 const presets = [
   { name: 'Junk food', unit: 'junkfoods', direction: 'reduce', icon: '🍔', unitOptions: ['junkfoods', 'items', 'times'] },
-  { name: 'Soda / sugary drinks', unit: 'drinks', direction: 'reduce', icon: '🥤', unitOptions: ['drinks', 'cans', 'bottles', 'ounces'] },
+
   { name: 'Smoking', unit: 'cigarettes', direction: 'reduce', icon: '🚬', unitOptions: ['cigarettes', 'puffs', 'packs'] },
   { name: 'Screen time', unit: 'hours', direction: 'reduce', icon: '📱', unitOptions: ['hours', 'minutes'] },
   { name: 'Social media', unit: 'hours', direction: 'reduce', icon: '📲', unitOptions: ['hours', 'minutes'] },
@@ -129,12 +129,12 @@ export default function Onboarding({ onComplete, startStep = 0 }) {
       )
     }
 
-    // Step 2: Junkfood scoring guide (only for Junk food habit)
+    // Step 2: Junkfood scoring guide — then straight to tracking
     if (step === 2) {
       return (
         <JunkfoodGuide
           onBack={() => setStep(1)}
-          onContinue={() => setStep(3)}
+          onContinue={() => onComplete({ ...habit })}
         />
       )
     }
