@@ -80,8 +80,7 @@ function HabitList({ habits, onSelect, onAdd }) {
           <button
             onClick={onAdd}
             className="p-5 bg-white/50 rounded-2xl border border-dashed border-warm-200 hover:border-warm-300 transition-colors text-center font-medium"
-            style={{ color: '#f0c060' }}
-            style={{ textShadow: '0 0 6px rgba(18, 26, 42, 0.6), 0 1px 3px rgba(18, 26, 42, 0.5), 0 0 10px rgba(18, 26, 42, 0.35)' }}
+            style={{ color: '#f0c060', textShadow: '0 0 6px rgba(18, 26, 42, 0.6), 0 1px 3px rgba(18, 26, 42, 0.5), 0 0 10px rgba(18, 26, 42, 0.35)' }}
           >
             + Add a new habit
           </button>
