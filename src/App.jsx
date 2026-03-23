@@ -1,12 +1,25 @@
 import { useState, useEffect, useRef } from 'react'
-import { loadData, saveData, getToday, getTodayEntry, getYesterdayEntry, calcNextGoal, calcBaseline, getActiveHabit, addHabit, updateActiveHabit, getDevOffset, advanceDay, resetDevMode } from './store'
+import { loadData, saveData, getToday, calcNextGoal, calcBaseline, getActiveHabit, addHabit, updateActiveHabit, getDevOffset, advanceDay, resetDevMode } from './store'
 import { loadFromSupabase, saveToSupabase } from './lib/supabaseSync'
 import Onboarding from './pages/Onboarding'
-import CheckIn from './pages/CheckIn'
 import DailyView from './pages/DailyView'
 import Progress from './pages/Progress'
 
 const DEV_MODE = true // Keep on so instructor can step through days
+
+function BridgeCars() {
+  return (
+    <>
+      <div className="bridge-road" />
+      <div className="bridge-cars">
+        <div className="bridge-car bridge-car--right" />
+        <div className="bridge-car bridge-car--left" />
+        <div className="bridge-car bridge-car--right" />
+        <div className="bridge-car bridge-car--left" />
+      </div>
+    </>
+  )
+}
 
 function DevToolbar({ onAdvance, onReset }) {
   if (!DEV_MODE) return null
@@ -48,7 +61,7 @@ function HabitList({ habits, onSelect, onAdd }) {
               <button
                 key={h.id}
                 onClick={() => onSelect(h.id)}
-                className="flex items-center justify-between p-5 bg-white rounded-2xl text-left hover:shadow-md transition-all border border-warm-100 active:scale-[0.98]"
+                className="flex items-center justify-between p-5 bg-white rounded-2xl text-left hover:shadow-md transition-all steel-plate active:scale-[0.98]"
               >
                 <div>
                   <div className="font-medium text-warm-900">{h.name}</div>
@@ -66,7 +79,9 @@ function HabitList({ habits, onSelect, onAdd }) {
 
           <button
             onClick={onAdd}
-            className="p-5 bg-white/50 rounded-2xl text-warm-400 border border-dashed border-warm-200 hover:border-warm-300 transition-colors text-center font-medium"
+            className="p-5 bg-white/50 rounded-2xl border border-dashed border-warm-200 hover:border-warm-300 transition-colors text-center font-medium"
+            style={{ color: '#f0c060' }}
+            style={{ textShadow: '0 0 6px rgba(18, 26, 42, 0.6), 0 1px 3px rgba(18, 26, 42, 0.5), 0 0 10px rgba(18, 26, 42, 0.35)' }}
           >
             + Add a new habit
           </button>
@@ -85,7 +100,9 @@ function BaselineComplete({ habit, avg, onStart }) {
   return (
     <div className="min-h-screen bg-warm-50 flex flex-col items-center justify-center p-6">
       <div className="max-w-md w-full text-center">
-        <p className="text-5xl mb-6">📊</p>
+        <div className="w-14 h-14 rounded-2xl bg-warm-100 text-warm-500 flex items-center justify-center mx-auto mb-6">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+        </div>
         <h2 className="text-2xl font-bold text-warm-900 mb-3">
           Your baseline is set
         </h2>
@@ -95,14 +112,14 @@ function BaselineComplete({ habit, avg, onStart }) {
         <p className="text-warm-500 mb-6">
           Now we'll start working toward {habit.direction === 'reduce' ? 'reducing' : 'building on'} that — at your pace.
         </p>
-        <div className="bg-white rounded-2xl p-5 border border-warm-100 mb-8 text-left">
+        <div className="bg-white rounded-2xl p-5 steel-plate mb-8 text-left">
           <p className="text-warm-700 text-sm leading-relaxed">
             <span className="font-semibold">One thing to know:</span> progress won't be a straight line. Some days you'll backslide, and that's completely normal. What matters is the overall trend, not any single day.
           </p>
         </div>
 
         <p className="text-warm-600 font-medium mb-4">Set your first goal</p>
-        <div className="bg-white rounded-3xl p-8 text-center shadow-sm border border-warm-100 mb-6">
+        <div className="bg-white rounded-3xl p-8 text-center shadow-sm steel-plate mb-6">
           <div className="flex items-center justify-center gap-3">
             <button
               onClick={() => {
@@ -155,15 +172,61 @@ function BaselineComplete({ habit, avg, onStart }) {
   )
 }
 
+// Helper: get the latest date the user should be viewing
+function getLatestViewingDate(habit) {
+  if (!habit || habit.entries.length === 0) return getToday()
+  // Find the last entry that isn't fully complete
+  const sorted = [...habit.entries].sort((a, b) => a.date.localeCompare(b.date))
+  const lastEntry = sorted[sorted.length - 1]
+  const isBaseline = habit.phase === 'baseline'
+
+  // If last entry is complete, the next date is today (if it's available)
+  const lastComplete = isBaseline
+    ? lastEntry.actual != null
+    : lastEntry.finalized === true
+
+  if (lastComplete) {
+    // Show today if today is after the last entry
+    const today = getToday()
+    if (today > lastEntry.date) return today
+    return lastEntry.date
+  }
+  // Otherwise show the incomplete day
+  return lastEntry.date
+}
+
+// Get next calendar day from a date string
+function nextDay(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00')
+  d.setDate(d.getDate() + 1)
+  return d.toISOString().split('T')[0]
+}
+
+function prevDay(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00')
+  d.setDate(d.getDate() - 1)
+  return d.toISOString().split('T')[0]
+}
+
 function App() {
   const [data, setData] = useState(loadData)
   const [view, setView] = useState('daily')
   const [addingNew, setAddingNew] = useState(false)
+  const [viewingDate, setViewingDate] = useState(getToday())
   const [, forceRender] = useState(0)
   const saveTimer = useRef(null)
 
   const devAdvance = () => { advanceDay(); forceRender(n => n + 1) }
-  const devReset = () => { resetDevMode(); setData({ habits: [], activeHabitId: null }); setAddingNew(false); forceRender(n => n + 1) }
+  const devReset = () => { resetDevMode(); setData({ habits: [], activeHabitId: null }); setAddingNew(false); setViewingDate(getToday()); forceRender(n => n + 1) }
+
+  const activeHabit = getActiveHabit(data)
+
+  // Keep viewingDate in sync when habit changes
+  useEffect(() => {
+    if (activeHabit) {
+      setViewingDate(getLatestViewingDate(activeHabit))
+    }
+  }, [activeHabit?.id])
 
   // On mount, try loading from Supabase (cloud data takes priority if it has habits)
   useEffect(() => {
@@ -188,8 +251,6 @@ function App() {
     setData(prev => ({ ...prev, ...changes }))
   }
 
-  const activeHabit = getActiveHabit(data)
-
   // Update fields on the active habit
   const updateHabit = (changes) => {
     setData(prev => updateActiveHabit(prev, changes))
@@ -204,7 +265,13 @@ function App() {
         ? Math.floor(baseline * 0.9)
         : Math.ceil(baseline * 1.1)
     )
-    updateHabit({ baseline, phase: 'active', currentGoal })
+    // Create today's entry with the goal so MorningSetup doesn't re-ask
+    const today = getToday()
+    const existingEntry = activeHabit.entries.find(e => e.date === today)
+    const updatedEntries = existingEntry
+      ? activeHabit.entries.map(e => e.date === today ? { ...e, goal: currentGoal } : e)
+      : [...activeHabit.entries, { date: today, goal: currentGoal, actual: null, difficulty: null, finalized: false }]
+    updateHabit({ baseline, phase: 'active', currentGoal, entries: updatedEntries })
   }
 
   const goToList = () => {
@@ -216,13 +283,16 @@ function App() {
   // No habits yet, or adding a new one → show onboarding
   if (data.habits.length === 0 || addingNew) {
     return <>
+      <BridgeCars />
       <Onboarding
         key={data.habits.length === 0 ? 'fresh' : 'add'}
         startStep={data.habits.length === 0 ? 0 : 1}
+        onBack={data.habits.length > 0 ? () => setAddingNew(false) : null}
         onComplete={(habitInfo) => {
           const newData = addHabit(data, habitInfo)
           setData(newData)
           setAddingNew(false)
+          setViewingDate(getToday())
         }}
       />
       <DevToolbar onAdvance={devAdvance} onReset={devReset} />
@@ -232,9 +302,14 @@ function App() {
   // No active habit selected → show habit list
   if (!activeHabit) {
     return <>
+      <BridgeCars />
       <HabitList
         habits={data.habits}
-        onSelect={(id) => update({ activeHabitId: id })}
+        onSelect={(id) => {
+          update({ activeHabitId: id })
+          const habit = data.habits.find(h => h.id === id)
+          if (habit) setViewingDate(getLatestViewingDate(habit))
+        }}
         onAdd={() => setAddingNew(true)}
       />
       <DevToolbar onAdvance={devAdvance} onReset={devReset} />
@@ -246,47 +321,28 @@ function App() {
   if (activeHabit.phase === 'baseline' && baselineEntries.length >= 7) {
     const avg = calcBaseline(activeHabit.entries)
     return <>
+      <BridgeCars />
       <BaselineComplete
         habit={activeHabit}
         avg={avg}
-        onStart={(userGoal) => handleActivate(userGoal)}
+        onStart={(userGoal) => { handleActivate(userGoal); setViewingDate(getToday()) }}
       />
       <DevToolbar onAdvance={devAdvance} onReset={devReset} />
     </>
   }
 
-  // Morning check-in — only in active phase
-  const yesterday = getYesterdayEntry(activeHabit)
-  const todayEntry = getTodayEntry(activeHabit)
-  const needsCheckIn = activeHabit.phase === 'active' &&
-    yesterday && yesterday.actual != null && !yesterday.difficulty && !todayEntry
-
-  if (needsCheckIn) {
-    return <>
-      <CheckIn
-        habit={activeHabit}
-        yesterdayEntry={yesterday}
-        currentGoal={activeHabit.currentGoal}
-        suggestGoal={(difficulty) => {
-          return Math.round(calcNextGoal(activeHabit, activeHabit.currentGoal, difficulty))
-        }}
-        onComplete={(difficulty, userGoal) => {
-          const updatedEntries = activeHabit.entries.map(e =>
-            e.date === yesterday.date ? { ...e, difficulty } : e
-          )
-          updateHabit({
-            entries: updatedEntries,
-            currentGoal: userGoal,
-          })
-        }}
-      />
-      <DevToolbar onAdvance={devAdvance} onReset={devReset} />
-    </>
-  }
+  // Can the user go forward?
+  // During baseline: always (each tap = next day, no waiting for midnight)
+  // During active: only if the next calendar day has actually arrived
+  const today = getToday()
+  const next = nextDay(viewingDate)
+  const isBaselinePhase = activeHabit.phase === 'baseline'
+  const canGoForward = isBaselinePhase ? true : next <= today
 
   return (
     <div className="min-h-screen bg-warm-50">
-      <nav className="flex items-center justify-between p-4 bg-white/60 backdrop-blur-sm sticky top-0 z-10">
+      <BridgeCars />
+      <nav className="flex items-center justify-between p-4 bg-white/60 backdrop-blur-sm sticky top-0 z-10 steel-nav">
         <button
           onClick={goToList}
           className="w-10 h-10 flex items-center justify-center rounded-full text-warm-500 hover:bg-warm-100 transition-colors"
@@ -320,40 +376,94 @@ function App() {
 
       {view === 'daily' ? (
         <DailyView
+          key={viewingDate}
           data={{ ...data, habit: activeHabit, phase: activeHabit.phase, currentGoal: activeHabit.currentGoal, entries: activeHabit.entries }}
-          onLog={(actual) => {
-            const today = getToday()
-            const existing = activeHabit.entries.find(e => e.date === today)
+          viewingDate={viewingDate}
+          canGoForward={canGoForward}
+          onPrevDay={() => {
+            // Go to the previous entry's date
+            const sorted = [...activeHabit.entries].sort((a, b) => a.date.localeCompare(b.date))
+            const prevEntries = sorted.filter(e => e.date < viewingDate)
+            if (prevEntries.length > 0) {
+              setViewingDate(prevEntries[prevEntries.length - 1].date)
+            }
+          }}
+          onNextDay={() => {
+            // During baseline, advance dev clock so next day gets a new date
+            if (isBaselinePhase && next > today) {
+              advanceDay()
+              forceRender(n => n + 1)
+            }
+            setViewingDate(isBaselinePhase ? nextDay(viewingDate) : next)
+          }}
+          onSetGoal={(difficulty, goal, date, layerGoals) => {
+            // Save difficulty on yesterday's entry, set today's goal
+            const sorted = [...activeHabit.entries].sort((a, b) => a.date.localeCompare(b.date))
+            const prevEntry = sorted.filter(e => e.date < date).pop()
+            let updatedEntries = [...activeHabit.entries]
+            if (prevEntry) {
+              updatedEntries = updatedEntries.map(e =>
+                e.date === prevEntry.date ? { ...e, difficulty } : e
+              )
+            }
+            // Build layerData with goals if layers exist
+            const layerData = layerGoals ? Object.fromEntries(
+              Object.entries(layerGoals).map(([id, g]) => [id, { goal: g, actual: null }])
+            ) : undefined
+            // Create today's entry with the chosen goal
+            const existing = updatedEntries.find(e => e.date === date)
             if (existing) {
+              updatedEntries = updatedEntries.map(e =>
+                e.date === date ? { ...e, goal, ...(layerData ? { layerData } : {}) } : e
+              )
+            } else {
+              updatedEntries.push({ date, goal, actual: null, difficulty: null, finalized: false, ...(layerData ? { layerData } : {}) })
+            }
+            updateHabit({ entries: updatedEntries, currentGoal: goal, ...(layerGoals ? { layerGoals } : {}) })
+          }}
+          onLog={(actual, date, newLayerData) => {
+            const existing = activeHabit.entries.find(e => e.date === date)
+            if (existing) {
+              // Merge new layer actuals with existing layer goals
+              let mergedLayerData = existing.layerData
+              if (newLayerData) {
+                mergedLayerData = { ...existing.layerData }
+                for (const [id, vals] of Object.entries(newLayerData)) {
+                  mergedLayerData[id] = { ...mergedLayerData[id], ...vals }
+                }
+              }
               updateHabit({
                 entries: activeHabit.entries.map(e =>
-                  e.date === today ? { ...e, actual, finalized: actual == null ? false : e.finalized } : e
+                  e.date === date ? { ...e, actual, finalized: actual == null ? false : e.finalized, ...(mergedLayerData ? { layerData: mergedLayerData } : {}) } : e
                 ),
               })
             } else {
               updateHabit({
                 entries: [...activeHabit.entries, {
-                  date: today,
+                  date,
                   goal: activeHabit.currentGoal,
                   actual,
                   difficulty: null,
                   finalized: false,
+                  ...(newLayerData ? { layerData: newLayerData } : {}),
                 }],
               })
             }
           }}
-          onFinalize={(done, note) => {
-            const today = getToday()
+          onFinalize={(done, note, date) => {
             updateHabit({
               entries: activeHabit.entries.map(e =>
-                e.date === today ? { ...e, finalized: done, ...(note !== undefined ? { note } : {}) } : e
+                e.date === date ? { ...e, finalized: done, ...(note !== undefined ? { note } : {}) } : e
               ),
             })
           }}
           onActivate={handleActivate}
         />
       ) : (
-        <Progress data={{ ...data, habit: activeHabit, phase: activeHabit.phase, currentGoal: activeHabit.currentGoal, entries: activeHabit.entries }} />
+        <Progress
+          data={{ ...data, habit: activeHabit, phase: activeHabit.phase, currentGoal: activeHabit.currentGoal, entries: activeHabit.entries }}
+          onUpdateOutcome={(newOutcome) => updateHabit({ desiredOutcome: newOutcome })}
+        />
       )}
 
       <DevToolbar onAdvance={devAdvance} onReset={devReset} />

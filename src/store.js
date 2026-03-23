@@ -82,10 +82,15 @@ export function addHabit(data, habitInfo) {
     name: habitInfo.name,
     unit: habitInfo.unit,
     direction: habitInfo.direction,
-    baseline: null,
-    phase: 'baseline',
-    entries: [],
-    currentGoal: null,
+    baseline: habitInfo.skipBaseline ? 0 : null,
+    phase: habitInfo.skipBaseline ? 'active' : 'baseline',
+    entries: habitInfo.skipBaseline
+      ? [{ date: getToday(), goal: habitInfo.startingGoal, actual: null, difficulty: null, finalized: false }]
+      : [],
+    currentGoal: habitInfo.skipBaseline ? habitInfo.startingGoal : null,
+    desiredOutcome: habitInfo.desiredOutcome || '',
+    layers: habitInfo.layers || [],
+    layerGoals: habitInfo.startingLayerGoals || {},
     ...(habitInfo.scoringSystem ? { scoringSystem: habitInfo.scoringSystem } : {}),
   }
   return {

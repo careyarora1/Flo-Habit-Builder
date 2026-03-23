@@ -1,42 +1,259 @@
 @import "tailwindcss";
 
 @theme {
-  --color-warm-50: #fdf8f0;
-  --color-warm-100: #f5ead6;
-  --color-warm-200: #e8d5b0;
-  --color-warm-300: #d4b88a;
-  --color-warm-400: #c49a64;
-  --color-warm-500: #b07d44;
-  --color-warm-600: #8f6435;
-  --color-warm-700: #6e4d29;
-  --color-warm-800: #4d361d;
-  --color-warm-900: #2c1f11;
+  /* Brooklyn Bridge — twilight over the East River */
 
-  --color-sage-50: #f0f5f0;
-  --color-sage-100: #d4e4d4;
-  --color-sage-200: #b0ccb0;
-  --color-sage-300: #8bb48b;
-  --color-sage-400: #6b9c6b;
-  --color-sage-500: #4e7f4e;
-  --color-sage-600: #3d643d;
-  --color-sage-700: #2d4a2d;
-  --color-sage-800: #1e321e;
-  --color-sage-900: #0f190f;
+  /* warm → brighter twilight blues & silver */
+  --color-warm-50: #1a2133;
+  --color-warm-100: #2a3a58;
+  --color-warm-200: #3d5070;
+  --color-warm-300: #5a7499;
+  --color-warm-400: #8aa0c0;
+  --color-warm-500: #aec2e0;
+  --color-warm-600: #c8d6ed;
+  --color-warm-700: #dce6f5;
+  --color-warm-800: #edf1f9;
+  --color-warm-900: #ffffff;
 
-  --color-coral-400: #e8806a;
-  --color-coral-500: #d4654e;
+  /* sage → vivid golden / amber glow */
+  --color-sage-50: #3d2e1a;
+  --color-sage-100: #6b5230;
+  --color-sage-200: #8c6b3a;
+  --color-sage-300: #b88c48;
+  --color-sage-400: #daa650;
+  --color-sage-500: #eab840;
+  --color-sage-600: #f0cc58;
+  --color-sage-700: #f5dc80;
+  --color-sage-800: #faeaa8;
+  --color-sage-900: #fef5d8;
+
+  /* coral → brighter rust/copper accent */
+  --color-coral-400: #f09468;
+  --color-coral-500: #e07850;
 
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
+/* ── Main body — twilight sky gradient with bridge silhouette ── */
 body {
   margin: 0;
   min-height: 100vh;
-  background-color: var(--color-warm-50);
+  background: linear-gradient(
+    175deg,
+    #0d1321 0%,
+    #162038 20%,
+    #1e3050 40%,
+    #2a4060 55%,
+    #3d5575 70%,
+    #d4944a 88%,
+    #e8a84e 94%,
+    #f0c060 100%
+  );
+  background-attachment: fixed;
   color: var(--color-warm-900);
 }
 
-/* Typing indicator animation */
+/* Suspension cables radiating from center top */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    /* Main cables — left and right */
+    linear-gradient(158deg, transparent 49.6%, rgba(234, 184, 64, 0.18) 49.6%, rgba(234, 184, 64, 0.18) 49.8%, transparent 49.8%) no-repeat,
+    linear-gradient(22deg, transparent 49.6%, rgba(234, 184, 64, 0.18) 49.6%, rgba(234, 184, 64, 0.18) 49.8%, transparent 49.8%) no-repeat,
+    /* Secondary cables */
+    linear-gradient(165deg, transparent 49.7%, rgba(234, 184, 64, 0.1) 49.7%, rgba(234, 184, 64, 0.1) 49.85%, transparent 49.85%) no-repeat,
+    linear-gradient(15deg, transparent 49.7%, rgba(234, 184, 64, 0.1) 49.7%, rgba(234, 184, 64, 0.1) 49.85%, transparent 49.85%) no-repeat,
+    /* Outer cables */
+    linear-gradient(150deg, transparent 49.75%, rgba(234, 184, 64, 0.07) 49.75%, rgba(234, 184, 64, 0.07) 49.88%, transparent 49.88%) no-repeat,
+    linear-gradient(30deg, transparent 49.75%, rgba(234, 184, 64, 0.07) 49.75%, rgba(234, 184, 64, 0.07) 49.88%, transparent 49.88%) no-repeat;
+}
+
+/* Bridge tower Gothic arch — bottom of screen */
+body::after {
+  content: '';
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 80px;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    /* Tower base */
+    linear-gradient(to top, rgba(30, 40, 55, 0.6) 0%, rgba(30, 40, 55, 0.3) 70%, transparent 100%);
+  border-radius: 100px 100px 0 0;
+  mask: radial-gradient(ellipse 60% 100% at 50% 100%, black 0%, transparent 70%);
+  -webkit-mask: radial-gradient(ellipse 60% 100% at 50% 100%, black 0%, transparent 70%);
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Glass-morphism cards (frosted steel) ── */
+.steel-plate {
+  position: relative;
+  background: rgba(18, 26, 42, 0.6) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(234, 184, 64, 0.25);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+/* Corner rivets */
+.steel-plate::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  border-radius: inherit;
+  background-image:
+    radial-gradient(circle at 8px 8px, rgba(234, 184, 64, 0.35) 2px, transparent 2px),
+    radial-gradient(circle at calc(100% - 8px) 8px, rgba(234, 184, 64, 0.35) 2px, transparent 2px),
+    radial-gradient(circle at 8px calc(100% - 8px), rgba(234, 184, 64, 0.35) 2px, transparent 2px),
+    radial-gradient(circle at calc(100% - 8px) calc(100% - 8px), rgba(234, 184, 64, 0.35) 2px, transparent 2px);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+/* ── Cable accent lines across cards ── */
+.cable-accent {
+  position: relative;
+  overflow: hidden;
+}
+.cable-accent::after {
+  content: '';
+  position: absolute;
+  top: -100%;
+  right: 10%;
+  width: 1px;
+  height: 300%;
+  background: linear-gradient(to bottom, transparent, rgba(234, 184, 64, 0.3), transparent);
+  transform: rotate(20deg);
+  pointer-events: none;
+}
+
+/* ── Nav bar — steel beam ── */
+.steel-nav {
+  background: rgba(13, 19, 33, 0.7) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(234, 184, 64, 0.3);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* ── White overrides for dark theme ── */
+/* Cards that use bg-white need to be transparent on dark */
+.bg-white {
+  background: rgba(18, 26, 42, 0.55) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* ── Buttons — vivid golden glow ── */
+.bg-sage-500 {
+  background: linear-gradient(135deg, #daa640 0%, #eab840 50%, #f0cc58 100%) !important;
+  color: #0d1321 !important;
+  border: 1px solid rgba(240, 204, 88, 0.5);
+  box-shadow: 0 4px 20px rgba(234, 184, 64, 0.4);
+  font-weight: 600;
+}
+.bg-sage-500:hover {
+  box-shadow: 0 4px 28px rgba(234, 184, 64, 0.6);
+}
+
+/* Tab active state */
+.bg-sage-500.shadow-md {
+  box-shadow: 0 2px 8px rgba(212, 168, 74, 0.4);
+}
+
+/* ── Input fields ── */
+input, textarea {
+  color: var(--color-warm-900) !important;
+}
+input::placeholder, textarea::placeholder {
+  color: rgba(176, 190, 210, 0.5) !important;
+}
+.bg-warm-50 {
+  background: rgba(30, 40, 60, 0.5) !important;
+}
+
+/* ── Horizontal cable wires across the viewport ── */
+#root::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 119px,
+      rgba(212, 168, 74, 0.04) 119px,
+      rgba(212, 168, 74, 0.04) 120px
+    );
+}
+
+/* ── Vertical tower pillars on edges ── */
+#root::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    linear-gradient(to right, rgba(13, 19, 33, 0.4) 0%, transparent 3%, transparent 97%, rgba(13, 19, 33, 0.4) 100%),
+    linear-gradient(to right,
+      transparent 0px, transparent 2px,
+      rgba(212, 168, 74, 0.06) 2px, rgba(212, 168, 74, 0.06) 3px,
+      transparent 3px, transparent 100%
+    ),
+    linear-gradient(to left,
+      transparent 0px, transparent 2px,
+      rgba(212, 168, 74, 0.06) 2px, rgba(212, 168, 74, 0.06) 3px,
+      transparent 3px, transparent 100%
+    );
+}
+
+/* ── Warm-100 border override for dark mode ── */
+.border-warm-100 {
+  border-color: rgba(234, 184, 64, 0.2) !important;
+}
+.border-warm-200 {
+  border-color: rgba(234, 184, 64, 0.3) !important;
+}
+
+/* ── Arrow navigation buttons ── */
+.rounded-full.shadow-lg {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ── Warm icon backgrounds ── */
+.bg-warm-100 {
+  background: rgba(30, 40, 60, 0.6) !important;
+}
+
+/* ── Typing indicator animation ── */
 @keyframes dot-bounce {
   0%, 80%, 100% { transform: translateY(0); }
   40% { transform: translateY(-6px); }
@@ -47,3 +264,149 @@ body {
 }
 .typing-dot:nth-child(2) { animation-delay: 0.2s; }
 .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* ── Scrollbar styling ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(13, 19, 33, 0.3);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(234, 184, 64, 0.4);
+  border-radius: 3px;
+}
+
+/* ── Cars crossing the bridge with headlights ── */
+@keyframes car-right {
+  0%   { transform: translateX(-20px); opacity: 0; }
+  5%   { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateX(calc(100vw + 20px)); opacity: 0; }
+}
+@keyframes car-left {
+  0%   { transform: translateX(calc(100vw + 20px)); opacity: 0; }
+  5%   { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateX(-20px); opacity: 0; }
+}
+
+/* Car container — sits at ~75% height (bridge deck level) */
+.bridge-cars {
+  position: fixed;
+  bottom: 18%;
+  left: 0;
+  right: 0;
+  height: 4px;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* Individual car — small rectangle with glowing headlights */
+.bridge-car {
+  position: absolute;
+  width: 8px;
+  height: 3px;
+  border-radius: 1px;
+}
+
+/* Car going right (headlights in front = right side) */
+.bridge-car--right {
+  background: rgba(40, 50, 70, 0.6);
+  animation: car-right linear infinite;
+  box-shadow:
+    12px 0 8px 2px rgba(255, 240, 180, 0.5),
+    14px 0 16px 4px rgba(255, 240, 180, 0.2);
+}
+.bridge-car--right::before {
+  content: '';
+  position: absolute;
+  right: -4px;
+  top: -1px;
+  width: 4px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 245, 200, 0.9);
+  box-shadow: 0 0 6px 2px rgba(255, 240, 180, 0.7);
+}
+
+/* Car going left (headlights in front = left side) */
+.bridge-car--left {
+  background: rgba(40, 50, 70, 0.6);
+  animation: car-left linear infinite;
+  box-shadow:
+    -12px 0 8px 2px rgba(255, 200, 180, 0.4),
+    -14px 0 16px 4px rgba(255, 200, 180, 0.15);
+}
+.bridge-car--left::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: -1px;
+  width: 4px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 220, 190, 0.8);
+  box-shadow: 0 0 6px 2px rgba(255, 180, 140, 0.6);
+}
+
+/* Tail lights (red glow on the back) */
+.bridge-car--right::after {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: 0;
+  width: 2px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255, 60, 40, 0.7);
+  box-shadow: 0 0 4px 1px rgba(255, 40, 20, 0.4);
+}
+.bridge-car--left::after {
+  content: '';
+  position: absolute;
+  right: -2px;
+  top: 0;
+  width: 2px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255, 60, 40, 0.7);
+  box-shadow: 0 0 4px 1px rgba(255, 40, 20, 0.4);
+}
+
+/* Staggered cars with different speeds and lanes */
+.bridge-car:nth-child(1) { top: 0; animation-duration: 12s; animation-delay: 0s; }
+.bridge-car:nth-child(2) { top: 0; animation-duration: 14s; animation-delay: 4s; }
+.bridge-car:nth-child(3) { top: 0; animation-duration: 10s; animation-delay: 8s; }
+.bridge-car:nth-child(4) { top: 0; animation-duration: 16s; animation-delay: 2s; }
+
+/* Bridge road surface — subtle dark strip */
+.bridge-road {
+  position: fixed;
+  bottom: 17%;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: rgba(20, 28, 42, 0.4);
+  pointer-events: none;
+  z-index: 0;
+  border-top: 1px solid rgba(234, 184, 64, 0.08);
+  border-bottom: 1px solid rgba(234, 184, 64, 0.08);
+}
+/* Center lane divider */
+.bridge-road::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(234, 184, 64, 0.15) 0px,
+    rgba(234, 184, 64, 0.15) 20px,
+    transparent 20px,
+    transparent 40px
+  );
+}
