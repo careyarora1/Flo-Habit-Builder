@@ -54,9 +54,36 @@ function DevToolbar({ onAdvance, onReset, onFullReset }) {
   )
 }
 
-function HabitList({ habits, onSelect, onAdd }) {
+function HabitList({ habits, onSelect, onAdd, onDelete }) {
+  const [confirmDelete, setConfirmDelete] = useState(null)
   return (
     <div className="min-h-screen bg-warm-50 flex flex-col items-center p-6 pt-16">
+      {/* Delete confirmation modal */}
+      {confirmDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-40 p-6">
+          <div className="steel-plate rounded-2xl p-6 max-w-sm w-full space-y-4">
+            <h3 className="text-lg font-semibold text-warm-900 text-center">Delete habit?</h3>
+            <p className="text-warm-400 text-sm text-center">
+              Are you sure you want to delete <span className="text-warm-900 font-medium">{confirmDelete.name}</span>? All tracking data will be lost.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="flex-1 py-3 rounded-xl font-medium text-warm-400 bg-warm-50 hover:bg-warm-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { onDelete(confirmDelete.id); setConfirmDelete(null) }}
+                className="flex-1 py-3 rounded-xl font-medium text-white bg-red-600 hover:bg-red-500 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-md w-full">
         <h2 className="text-2xl font-bold text-warm-900 mb-2">Your habits</h2>
         <p className="text-warm-500 mb-8">Tap a habit to continue tracking.</p>
@@ -66,22 +93,30 @@ function HabitList({ habits, onSelect, onAdd }) {
             const daysLogged = h.entries.filter(e => e.actual != null).length
             const icon = h.direction === 'reduce' ? '↓' : '↑'
             return (
-              <button
-                key={h.id}
-                onClick={() => onSelect(h.id)}
-                className="flex items-center justify-between p-5 bg-white rounded-2xl text-left hover:shadow-md transition-all steel-plate active:scale-[0.98]"
-              >
-                <div>
-                  <div className="font-medium text-warm-900">{h.name}</div>
-                  <div className="text-sm text-warm-400">
-                    {h.phase === 'baseline'
-                      ? `Baseline · ${daysLogged}/7 days`
-                      : `${icon} ${h.currentGoal} ${h.unit} · Day ${daysLogged}`
-                    }
+              <div key={h.id} className="flex items-center gap-2">
+                <button
+                  onClick={() => onSelect(h.id)}
+                  className="flex-1 flex items-center justify-between p-5 bg-white rounded-2xl text-left hover:shadow-md transition-all steel-plate active:scale-[0.98]"
+                >
+                  <div>
+                    <div className="font-medium text-warm-900">{h.name}</div>
+                    <div className="text-sm text-warm-400">
+                      {h.phase === 'baseline'
+                        ? `Baseline · ${daysLogged}/7 days`
+                        : `${icon} ${h.currentGoal} ${h.unit} · Day ${daysLogged}`
+                      }
+                    </div>
                   </div>
-                </div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-warm-300"><path d="m9 18 6-6-6-6"/></svg>
-              </button>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-warm-300"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(h)}
+                  className="w-10 h-10 flex items-center justify-center rounded-xl text-warm-400 hover:text-red-400 hover:bg-red-400/10 transition-colors shrink-0"
+                  title="Delete habit"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+              </div>
             )
           })}
 
@@ -326,6 +361,13 @@ function App() {
           if (habit) setViewingDate(getLatestViewingDate(habit))
         }}
         onAdd={() => setAddingNew(true)}
+        onDelete={(id) => {
+          setData(prev => ({
+            ...prev,
+            habits: prev.habits.filter(h => h.id !== id),
+            activeHabitId: prev.activeHabitId === id ? null : prev.activeHabitId,
+          }))
+        }}
       />
       <DevToolbar onAdvance={devAdvance} onReset={devReset} onFullReset={devFullReset} />
     </>
