@@ -23,7 +23,7 @@ function BridgeCars() {
   )
 }
 
-function DevToolbar({ onAdvance, onReset }) {
+function DevToolbar({ onAdvance, onReset, onFullReset }) {
   if (!DEV_MODE) return null
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-gray-900 text-white px-4 py-2 flex items-center justify-between text-xs z-50">
@@ -42,6 +42,12 @@ function DevToolbar({ onAdvance, onReset }) {
           className="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded font-medium"
         >
           Reset
+        </button>
+        <button
+          onClick={onFullReset}
+          className="bg-red-700 hover:bg-red-600 px-3 py-1 rounded font-medium"
+        >
+          Full Reset
         </button>
       </div>
     </div>
@@ -250,6 +256,7 @@ function App() {
 
   const devAdvance = () => { advanceDay(); forceRender(n => n + 1) }
   const devReset = () => { resetDevMode(); setData({ habits: [], activeHabitId: null }); setAddingNew(false); setViewingDate(getToday()); forceRender(n => n + 1) }
+  const devFullReset = async () => { resetDevMode(); localStorage.clear(); if (signOut) await signOut(); window.location.reload() }
 
   // Show auth page if not logged in
   if (authLoading) return <div className="min-h-screen bg-warm-50 flex items-center justify-center"><p className="text-warm-400">Loading...</p></div>
@@ -303,7 +310,7 @@ function App() {
           setViewingDate(getToday())
         }}
       />
-      <DevToolbar onAdvance={devAdvance} onReset={devReset} />
+      <DevToolbar onAdvance={devAdvance} onReset={devReset} onFullReset={devFullReset} />
     </>
   }
 
@@ -320,7 +327,7 @@ function App() {
         }}
         onAdd={() => setAddingNew(true)}
       />
-      <DevToolbar onAdvance={devAdvance} onReset={devReset} />
+      <DevToolbar onAdvance={devAdvance} onReset={devReset} onFullReset={devFullReset} />
     </>
   }
 
@@ -335,7 +342,7 @@ function App() {
         avg={avg}
         onStart={(userGoal) => { handleActivate(userGoal); setViewingDate(getToday()) }}
       />
-      <DevToolbar onAdvance={devAdvance} onReset={devReset} />
+      <DevToolbar onAdvance={devAdvance} onReset={devReset} onFullReset={devFullReset} />
     </>
   }
 
@@ -480,7 +487,7 @@ function App() {
         />
       )}
 
-      <DevToolbar onAdvance={devAdvance} onReset={devReset} />
+      <DevToolbar onAdvance={devAdvance} onReset={devReset} onFullReset={devFullReset} />
     </div>
   )
 }
