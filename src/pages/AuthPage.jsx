@@ -9,18 +9,24 @@ export default function AuthPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [confirmationSent, setConfirmationSent] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setConfirmationSent(false)
     setLoading(true)
 
-    const err = mode === 'login'
-      ? await signIn(email, password)
-      : await signUp(email, password)
-
-    if (err) {
-      setError(typeof err.message === 'string' ? err.message : String(err.message || err))
+    if (mode === 'login') {
+      const err = await signIn(email, password)
+      if (err) setError(typeof err.message === 'string' ? err.message : String(err.message || err))
+    } else {
+      const err = await signUp(email, password)
+      if (err) {
+        setError(typeof err.message === 'string' ? err.message : String(err.message || err))
+      } else {
+        setConfirmationSent(true)
+      }
     }
     setLoading(false)
   }
@@ -146,6 +152,19 @@ export default function AuthPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="steel-plate rounded-2xl p-6 space-y-4">
+          {confirmationSent ? (
+            <div className="text-center space-y-3 py-4">
+              <p className="text-warm-900 font-medium text-lg">A confirmation has been sent to your email</p>
+              <p className="text-warm-400 text-sm">Check your inbox and click the link to verify your account.</p>
+              <button
+                type="button"
+                onClick={() => { setConfirmationSent(false); setMode('login') }}
+                className="text-sage-400 hover:text-sage-300 font-medium text-sm mt-2"
+              >
+                Back to log in
+              </button>
+            </div>
+          ) : (<>
           <h2 className="text-xl font-semibold text-warm-900 text-center">
             {mode === 'login' ? 'Welcome back' : 'Create an account'}
           </h2>
@@ -204,6 +223,7 @@ export default function AuthPage() {
               {mode === 'login' ? 'Sign up' : 'Log in'}
             </button>
           </p>
+          </>)}
         </form>
       </div>
     </div>
