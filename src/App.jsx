@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { loadData, saveData, getToday, calcNextGoal, calcBaseline, getActiveHabit, addHabit, updateActiveHabit, getDevOffset, advanceDay, resetDevMode } from './store'
 import { loadFromSupabase, saveToSupabase } from './lib/supabaseSync'
+import { useAuth } from './contexts/AuthContext'
+import AuthPage from './pages/AuthPage'
 import Onboarding from './pages/Onboarding'
 import DailyView from './pages/DailyView'
 import Progress from './pages/Progress'
@@ -208,12 +210,17 @@ function prevDay(dateStr) {
 }
 
 function App() {
+  const { user, loading: authLoading, signOut } = useAuth()
   const [data, setData] = useState(loadData)
   const [view, setView] = useState('daily')
   const [addingNew, setAddingNew] = useState(false)
   const [viewingDate, setViewingDate] = useState(getToday())
   const [, forceRender] = useState(0)
   const saveTimer = useRef(null)
+
+  // Show auth page if not logged in
+  if (authLoading) return <div className="min-h-screen bg-warm-50 flex items-center justify-center"><p className="text-warm-400">Loading...</p></div>
+  if (!user) return <><BridgeCars /><AuthPage /></>
 
   const devAdvance = () => { advanceDay(); forceRender(n => n + 1) }
   const devReset = () => { resetDevMode(); setData({ habits: [], activeHabitId: null }); setAddingNew(false); setViewingDate(getToday()); forceRender(n => n + 1) }
@@ -229,20 +236,22 @@ function App() {
 
   // On mount, try loading from Supabase (cloud data takes priority if it has habits)
   useEffect(() => {
-    loadFromSupabase().then(cloudData => {
+    if (!user) return
+    loadFromSupabase(user.id).then(cloudData => {
       if (cloudData && cloudData.habits && cloudData.habits.length > 0) {
         setData(cloudData)
         saveData(cloudData) // sync to localStorage too
       }
     }).catch(() => {}) // silently fail — localStorage is the fallback
-  }, [])
+  }, [user?.id])
 
   // Save to localStorage immediately, debounce Supabase saves
   useEffect(() => {
     saveData(data)
+    if (!user) return
     clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
-      saveToSupabase(data).catch(() => {})
+      saveToSupabase(user.id, data).catch(() => {})
     }, 1000)
   }, [data])
 
@@ -370,7 +379,13 @@ function App() {
             Progress
           </button>
         </div>
-        <div className="w-10" />
+        <button
+          onClick={signOut}
+          className="w-10 h-10 flex items-center justify-center rounded-full text-warm-500 hover:bg-warm-100 transition-colors"
+          title="Sign out"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
       </nav>
 
       {view === 'daily' ? (

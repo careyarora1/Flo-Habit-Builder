@@ -1,39 +1,26 @@
 import { supabase } from './supabase'
 
-const DEVICE_ID_KEY = 'habit-tracker-device-id'
-
-function getDeviceId() {
-  let id = localStorage.getItem(DEVICE_ID_KEY)
-  if (!id) {
-    id = crypto.randomUUID()
-    localStorage.setItem(DEVICE_ID_KEY, id)
-  }
-  return id
-}
-
-// Load data from Supabase (returns null if not found or client unavailable)
-export async function loadFromSupabase() {
-  if (!supabase) return null
-  const deviceId = getDeviceId()
+// Load data from Supabase by user ID
+export async function loadFromSupabase(userId) {
+  if (!supabase || !userId) return null
   const { data, error } = await supabase
     .from('user_data')
     .select('data, updated_at')
-    .eq('device_id', deviceId)
+    .eq('user_id', userId)
     .single()
 
   if (error || !data) return null
   return data.data
 }
 
-// Save data to Supabase (upsert) — silently skips if client unavailable
-export async function saveToSupabase(appData) {
-  if (!supabase) return
-  const deviceId = getDeviceId()
+// Save data to Supabase by user ID (upsert)
+export async function saveToSupabase(userId, appData) {
+  if (!supabase || !userId) return
   await supabase
     .from('user_data')
     .upsert({
-      device_id: deviceId,
+      user_id: userId,
       data: appData,
       updated_at: new Date().toISOString(),
-    }, { onConflict: 'device_id' })
+    }, { onConflict: 'user_id' })
 }
