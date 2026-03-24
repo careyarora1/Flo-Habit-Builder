@@ -23,7 +23,7 @@ function BridgeCars() {
   )
 }
 
-function DevToolbar({ onAdvance, onReset, onFullReset }) {
+function DevToolbar({ onAdvance, onReset, onFullReset, onSkipSignIn }) {
   if (!DEV_MODE) return null
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-gray-900 text-white px-4 py-2 flex items-center justify-between text-xs z-50">
@@ -31,24 +31,38 @@ function DevToolbar({ onAdvance, onReset, onFullReset }) {
         DEV · Day +{getDevOffset()} · "{getToday()}"
       </span>
       <div className="flex gap-2">
-        <button
-          onClick={onAdvance}
-          className="bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded font-medium"
-        >
-          Next Day →
-        </button>
-        <button
-          onClick={onReset}
-          className="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded font-medium"
-        >
-          Reset
-        </button>
-        <button
-          onClick={onFullReset}
-          className="bg-red-700 hover:bg-red-600 px-3 py-1 rounded font-medium"
-        >
-          Full Reset
-        </button>
+        {onSkipSignIn && (
+          <button
+            onClick={onSkipSignIn}
+            className="bg-green-700 hover:bg-green-600 px-3 py-1 rounded font-medium"
+          >
+            Skip Sign-in
+          </button>
+        )}
+        {onAdvance && (
+          <button
+            onClick={onAdvance}
+            className="bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded font-medium"
+          >
+            Next Day →
+          </button>
+        )}
+        {onReset && (
+          <button
+            onClick={onReset}
+            className="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded font-medium"
+          >
+            Reset
+          </button>
+        )}
+        {onFullReset && (
+          <button
+            onClick={onFullReset}
+            className="bg-red-700 hover:bg-red-600 px-3 py-1 rounded font-medium"
+          >
+            Full Reset
+          </button>
+        )}
       </div>
     </div>
   )
@@ -256,6 +270,7 @@ function App() {
   const [view, setView] = useState('daily')
   const [addingNew, setAddingNew] = useState(false)
   const [viewingDate, setViewingDate] = useState(getToday())
+  const [devSkipAuth, setDevSkipAuth] = useState(false)
   const [, forceRender] = useState(0)
   const saveTimer = useRef(null)
 
@@ -294,8 +309,8 @@ function App() {
   const devFullReset = async () => { resetDevMode(); localStorage.clear(); if (signOut) await signOut(); window.location.reload() }
 
   // Show auth page if not logged in
-  if (authLoading) return <div className="min-h-screen bg-warm-50 flex items-center justify-center"><p className="text-warm-400">Loading...</p></div>
-  if (!user) return <><BridgeCars /><AuthPage /></>
+  if (authLoading) return <div className="min-h-screen bg-warm-50 flex items-center justify-center"><p className="text-warm-400">Loading...</p><DevToolbar /></div>
+  if (!user && !devSkipAuth) return <><BridgeCars /><AuthPage /><DevToolbar onSkipSignIn={() => setDevSkipAuth(true)} onFullReset={devFullReset} /></>
 
   const update = (changes) => {
     setData(prev => ({ ...prev, ...changes }))
