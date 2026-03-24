@@ -248,6 +248,9 @@ function App() {
     }, 1000)
   }, [data])
 
+  const devAdvance = () => { advanceDay(); forceRender(n => n + 1) }
+  const devReset = () => { resetDevMode(); setData({ habits: [], activeHabitId: null }); setAddingNew(false); setViewingDate(getToday()); forceRender(n => n + 1) }
+
   // Show auth page if not logged in
   if (authLoading) return <div className="min-h-screen bg-warm-50 flex items-center justify-center"><p className="text-warm-400">Loading...</p></div>
   if (!user) return <><BridgeCars /><AuthPage /></>
