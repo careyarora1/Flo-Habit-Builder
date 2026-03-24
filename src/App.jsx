@@ -218,13 +218,6 @@ function App() {
   const [, forceRender] = useState(0)
   const saveTimer = useRef(null)
 
-  // Show auth page if not logged in
-  if (authLoading) return <div className="min-h-screen bg-warm-50 flex items-center justify-center"><p className="text-warm-400">Loading...</p></div>
-  if (!user) return <><BridgeCars /><AuthPage /></>
-
-  const devAdvance = () => { advanceDay(); forceRender(n => n + 1) }
-  const devReset = () => { resetDevMode(); setData({ habits: [], activeHabitId: null }); setAddingNew(false); setViewingDate(getToday()); forceRender(n => n + 1) }
-
   const activeHabit = getActiveHabit(data)
 
   // Keep viewingDate in sync when habit changes
@@ -254,6 +247,10 @@ function App() {
       saveToSupabase(user.id, data).catch(() => {})
     }, 1000)
   }, [data])
+
+  // Show auth page if not logged in
+  if (authLoading) return <div className="min-h-screen bg-warm-50 flex items-center justify-center"><p className="text-warm-400">Loading...</p></div>
+  if (!user) return <><BridgeCars /><AuthPage /></>
 
   const update = (changes) => {
     setData(prev => ({ ...prev, ...changes }))

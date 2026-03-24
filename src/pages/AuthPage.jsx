@@ -20,7 +20,7 @@ export default function AuthPage() {
       : await signUp(email, password)
 
     if (err) {
-      setError(err.message)
+      setError(typeof err.message === 'string' ? err.message : String(err.message || err))
     }
     setLoading(false)
   }
