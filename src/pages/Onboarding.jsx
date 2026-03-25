@@ -326,9 +326,15 @@ export default function Onboarding({ onComplete, startStep = 0, onBack }) {
 
               <button
                 onClick={() => onComplete({ ...habit })}
-                className="w-full bg-sage-500 text-white py-3.5 px-6 rounded-2xl font-medium text-lg hover:bg-sage-600 transition-colors shadow-lg shadow-sage-500/20"
+                className="w-full bg-sage-500 text-white py-3.5 px-6 rounded-2xl font-medium text-lg hover:bg-sage-600 transition-colors shadow-lg shadow-sage-500/20 mb-3"
               >
                 Start tracking
+              </button>
+              <button
+                onClick={() => setStep(5)}
+                className="w-full text-warm-500 py-3 px-6 rounded-2xl font-medium text-sm hover:text-warm-700 transition-colors"
+              >
+                I already know my habits — skip to goal setting
               </button>
             </>
           )}
@@ -437,10 +443,10 @@ export default function Onboarding({ onComplete, startStep = 0, onBack }) {
             Be honest with yourself.
           </h2>
           <p className="text-warm-500 mb-2 text-sm leading-relaxed">
-            Don't pick a number you <em>wish</em> you could do. Pick the number you're genuinely confident you'll follow through on.
+            Pick a goal you are 100% confident you will succeed at. The point is to succeed each day at the goal you set. Don't worry about how much of an improvement you can make, just make an improvement.
           </p>
           <p className="text-warm-400 mb-8 text-sm leading-relaxed">
-            It's better to succeed at something small than fail at something ambitious. We'll build from there.
+            If you're still not sure what's a good goal, set a goal that seems pointless — a number that you just know you will not fail, even if it feels trivial. Building habits is about a gradual process that is unnoticeable, which is exactly how bad habits come to be in the first place.
           </p>
 
           {hasLayers ? (
@@ -465,7 +471,7 @@ export default function Onboarding({ onComplete, startStep = 0, onBack }) {
           ) : (
             <div className="flex items-center justify-center gap-4 mb-8">
               <button
-                onClick={() => setBuildGoal(g => Math.max(1, (g || 1) - 1))}
+                onClick={() => setBuildGoal(g => Math.max(0.1, Math.round(((g || 1) - 0.1) * 10) / 10))}
                 className="w-12 h-12 rounded-full border-2 border-warm-200 flex items-center justify-center text-xl text-warm-500 hover:border-sage-400 transition-colors"
               >−</button>
               <div>
@@ -473,15 +479,13 @@ export default function Onboarding({ onComplete, startStep = 0, onBack }) {
                 <div className="text-warm-500 text-sm mt-1">{habit.unit}</div>
               </div>
               <button
-                onClick={() => setBuildGoal(g => (g || 1) + 1)}
+                onClick={() => setBuildGoal(g => Math.round(((g || 1) + 0.1) * 10) / 10)}
                 className="w-12 h-12 rounded-full border-2 border-warm-200 flex items-center justify-center text-xl text-warm-500 hover:border-sage-400 transition-colors"
               >+</button>
             </div>
           )}
 
-          <p className="text-warm-400 text-xs mb-6 italic">
-            Ask yourself: "Would I bet money that I'll actually do this tomorrow?"
-          </p>
+          <p className="text-warm-400 text-xs mb-6 italic" />
 
           <button
             onClick={() => {

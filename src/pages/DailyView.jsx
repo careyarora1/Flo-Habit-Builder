@@ -15,6 +15,8 @@ export default function DailyView({ data, viewingDate, onLog, onFinalize, onActi
   const entry = data.entries.find(e => e.date === viewingDate)
   const [inputValue, setInputValue] = useState(entry?.actual?.toString() || '')
   const [showSkipConfirm, setShowSkipConfirm] = useState(false)
+  const [showSkipGoalSetting, setShowSkipGoalSetting] = useState(false)
+  const [skipGoalValue, setSkipGoalValue] = useState(0.1)
   const [showReflection, setShowReflection] = useState(false)
   const [reflectionNote, setReflectionNote] = useState('')
   const [showSuccessReflection, setShowSuccessReflection] = useState(false)
@@ -543,7 +545,7 @@ export default function DailyView({ data, viewingDate, onLog, onFinalize, onActi
                       Keep tracking
                     </button>
                     <button
-                      onClick={() => { setShowSkipConfirm(false); onActivate() }}
+                      onClick={() => { setShowSkipConfirm(false); setShowSkipGoalSetting(true) }}
                       className="flex-1 py-3 rounded-2xl font-medium text-red-500 border border-red-200 hover:bg-red-50 transition-colors"
                     >
                       Skip anyway
@@ -553,6 +555,47 @@ export default function DailyView({ data, viewingDate, onLog, onFinalize, onActi
               </div>
             )}
           </>
+        )}
+
+        {/* Goal setting after skipping baseline */}
+        {showSkipGoalSetting && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-6">
+            <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-xl steel-plate">
+              <button
+                onClick={() => setShowSkipGoalSetting(false)}
+                className="text-warm-400 hover:text-warm-600 mb-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+              </button>
+              <p className="text-lg font-bold text-warm-900 mb-2 text-center">Be honest with yourself.</p>
+              <p className="text-sm text-warm-500 text-center mb-1">
+                Pick a goal you are 100% confident you will succeed at. The point is to succeed each day at the goal you set. Don't worry about how much of an improvement you can make, just make an improvement.
+              </p>
+              <p className="text-xs text-warm-400 text-center mb-6">
+                If you're still not sure what's a good goal, set a goal that seems pointless — a number that you just know you will not fail, even if it feels trivial. Building habits is about a gradual process that is unnoticeable, which is exactly how bad habits come to be in the first place.
+              </p>
+              <div className="flex items-center justify-center gap-4 mb-2">
+                <button
+                  onClick={() => setSkipGoalValue(v => Math.max(0.1, Math.round((v - 0.1) * 10) / 10))}
+                  className="w-10 h-10 rounded-full border-2 border-warm-200 text-warm-500 flex items-center justify-center text-xl font-bold hover:border-warm-300"
+                >−</button>
+                <div className="text-center">
+                  <span className="text-5xl font-bold text-warm-900">{skipGoalValue}</span>
+                  <p className="text-warm-500 text-sm">{data.habit.unit}</p>
+                </div>
+                <button
+                  onClick={() => setSkipGoalValue(v => Math.round((v + 0.1) * 10) / 10)}
+                  className="w-10 h-10 rounded-full border-2 border-warm-200 text-warm-500 flex items-center justify-center text-xl font-bold hover:border-warm-300"
+                >+</button>
+              </div>
+              <button
+                onClick={() => { setShowSkipGoalSetting(false); onActivate(skipGoalValue) }}
+                className="w-full bg-sage-500 text-white py-3.5 rounded-2xl font-medium text-lg hover:bg-sage-600 transition-colors"
+              >
+                I can do this — let's go
+              </button>
+            </div>
+          </div>
         )}
 
         {/* Recent entries */}
@@ -744,8 +787,11 @@ function MorningSetup({ habit, entries, viewingDate, onComplete }) {
       <p className="text-lg font-bold text-warm-900 mb-2 text-center">
         Set today's {hasLayers ? 'goals' : 'goal'}
       </p>
-      <p className="text-sm text-warm-500 text-center mb-6">
-        Be honest — only commit to what you think you'll actually do.
+      <p className="text-sm text-warm-500 text-center mb-2">
+        Pick a goal you are 100% confident you will succeed at. The point is to succeed each day at the goal you set. Don't worry about how much of an improvement you can make, just make an improvement.
+      </p>
+      <p className="text-xs text-warm-400 text-center mb-6">
+        If you're still not sure what's a good goal, set a goal that seems pointless — a number that you just know you will not fail, even if it feels trivial. Building habits is about a gradual process that is unnoticeable, which is exactly how bad habits come to be in the first place.
       </p>
 
       {hasLayers ? (

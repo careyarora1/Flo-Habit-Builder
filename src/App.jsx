@@ -165,14 +165,12 @@ function BaselineComplete({ habit, avg, onStart }) {
         <p className="text-warm-600 mb-2">
           Over the past 7 days, you averaged <span className="font-semibold text-warm-800">{avg} {habit.unit}</span>.
         </p>
-        <p className="text-warm-500 mb-6">
-          Now we'll start working toward {habit.direction === 'reduce' ? 'reducing' : 'building on'} that — at your pace.
+        <p className="text-warm-500 mb-2 text-sm leading-relaxed">
+          Pick a goal you are 100% confident you will succeed at. The point is to succeed each day at the goal you set. Don't worry about how much of an improvement you can make, just make an improvement.
         </p>
-        <div className="bg-white rounded-2xl p-5 steel-plate mb-8 text-left">
-          <p className="text-warm-700 text-sm leading-relaxed">
-            <span className="font-semibold">One thing to know:</span> progress won't be a straight line. Some days you'll backslide, and that's completely normal. What matters is the overall trend, not any single day.
-          </p>
-        </div>
+        <p className="text-warm-400 mb-6 text-sm leading-relaxed">
+          If you're still not sure what's a good goal, set a goal that seems pointless — a number that you just know you will not fail, even if it feels trivial. Building habits is about a gradual process that is unnoticeable, which is exactly how bad habits come to be in the first place.
+        </p>
 
         <p className="text-warm-600 font-medium mb-4">Set your first goal</p>
         <div className="bg-white rounded-3xl p-8 text-center shadow-sm steel-plate mb-6">
