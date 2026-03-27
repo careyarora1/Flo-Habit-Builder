@@ -135,7 +135,7 @@ export default function Onboarding({ onComplete, startStep = 0, onBack }) {
 
             {!showCustom ? (
               <button
-                onClick={() => setShowCustom(true)}
+                onClick={() => { setHabit({ name: '', unit: '', direction: 'reduce', desiredOutcome: '', layers: [] }); setShowCustom(true) }}
                 className="p-4 rounded-2xl font-medium border border-dashed border-amber-500/50 hover:border-amber-400 transition-colors"
                 style={{ backgroundColor: 'rgba(210, 155, 50, 0.35)', color: '#ffffff', textShadow: '-1px -1px 0 #1a1a2e, 1px -1px 0 #1a1a2e, -1px 1px 0 #1a1a2e, 1px 1px 0 #1a1a2e, 0 0 8px rgba(18, 26, 42, 0.6)' }}
               >
@@ -213,7 +213,7 @@ export default function Onboarding({ onComplete, startStep = 0, onBack }) {
 
     return (
       <div className="min-h-screen bg-warm-50 flex flex-col items-center justify-center p-6 relative">
-        <BackButton onClick={() => setStep(habit.name === 'Junk food' ? 2 : 1)} />
+        <BackButton onClick={() => { setStep(habit.name === 'Junk food' ? 2 : 1); setShowCustom(false) }} />
         <div className="max-w-md w-full text-center">
           <h2 className="text-2xl font-bold text-warm-900 mb-3">
             {outcomeQuestion}
@@ -471,15 +471,26 @@ export default function Onboarding({ onComplete, startStep = 0, onBack }) {
           ) : (
             <div className="flex items-center justify-center gap-4 mb-8">
               <button
-                onClick={() => setBuildGoal(g => Math.max(0.1, Math.round(((g || 1) - 0.1) * 10) / 10))}
+                onClick={() => setBuildGoal(g => Math.max(0.001, Math.round(((Number(g) || 1) - 0.1) * 1000) / 1000))}
                 className="w-12 h-12 rounded-full border-2 border-warm-200 flex items-center justify-center text-xl text-warm-500 hover:border-sage-400 transition-colors"
               >−</button>
-              <div>
-                <div className="text-5xl font-bold text-warm-900">{buildGoal || 1}</div>
+              <div className="text-center">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={buildGoal ?? 1}
+                  onChange={e => {
+                    const raw = e.target.value
+                    if (raw === '' || /^\d*\.?\d{0,3}$/.test(raw)) {
+                      setBuildGoal(raw)
+                    }
+                  }}
+                  className="text-5xl font-bold text-warm-900 text-center bg-transparent outline-none w-32"
+                />
                 <div className="text-warm-500 text-sm mt-1">{habit.unit}</div>
               </div>
               <button
-                onClick={() => setBuildGoal(g => Math.round(((g || 1) + 0.1) * 10) / 10)}
+                onClick={() => setBuildGoal(g => Math.round(((Number(g) || 1) + 0.1) * 1000) / 1000)}
                 className="w-12 h-12 rounded-full border-2 border-warm-200 flex items-center justify-center text-xl text-warm-500 hover:border-sage-400 transition-colors"
               >+</button>
             </div>
@@ -493,7 +504,7 @@ export default function Onboarding({ onComplete, startStep = 0, onBack }) {
                 const totalGoal = Object.values(layerGoals).reduce((s, v) => s + (v || 0), 0)
                 onComplete({ ...habit, skipBaseline: true, startingGoal: totalGoal, startingLayerGoals: layerGoals })
               } else {
-                onComplete({ ...habit, skipBaseline: true, startingGoal: buildGoal || 1 })
+                onComplete({ ...habit, skipBaseline: true, startingGoal: Number(buildGoal) || 1 })
               }
             }}
             disabled={hasLayers ? !allLayerGoalsSet : false}

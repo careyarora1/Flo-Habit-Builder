@@ -10,11 +10,19 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [confirmationSent, setConfirmationSent] = useState(false)
+  const [showTos, setShowTos] = useState(false)
+  const [tosAgreed, setTosAgreed] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setConfirmationSent(false)
+
+    if (mode === 'signup' && !tosAgreed) {
+      setShowTos(true)
+      return
+    }
+
     setLoading(true)
 
     if (mode === 'login') {
@@ -27,6 +35,20 @@ export default function AuthPage() {
       } else {
         setConfirmationSent(true)
       }
+    }
+    setLoading(false)
+  }
+
+  const handleTosAgree = async () => {
+    setTosAgreed(true)
+    setShowTos(false)
+    setLoading(true)
+    setError('')
+    const err = await signUp(email, password)
+    if (err) {
+      setError(typeof err.message === 'string' ? err.message : String(err.message || err))
+    } else {
+      setConfirmationSent(true)
     }
     setLoading(false)
   }
@@ -226,6 +248,77 @@ export default function AuthPage() {
           </>)}
         </form>
       </div>
+
+      {showTos && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="steel-plate rounded-2xl p-6 max-w-sm w-full max-h-[85vh] flex flex-col">
+            <h2 className="text-lg font-bold text-warm-900 text-center mb-4">Terms of Service</h2>
+            <div className="overflow-y-auto flex-1 mb-4 text-sm text-warm-400 space-y-3 pr-1" style={{ maxHeight: '55vh' }}>
+              <p className="font-semibold text-warm-900">Last updated: March 25, 2026</p>
+
+              <p>By creating an account and using Flo Habit Builder ("the App"), you agree to the following terms. If you do not agree, do not use the App.</p>
+
+              <p className="font-semibold text-warm-500">1. Nature of the App</p>
+              <p>Flo Habit Builder is a personal productivity and habit-tracking tool. It is designed to help users set, monitor, and adjust personal goals over time. The App provides general wellness features only and is <strong className="text-warm-900">not intended to replace, substitute, or serve as any form of medical, psychological, psychiatric, or therapeutic treatment or advice.</strong></p>
+
+              <p className="font-semibold text-warm-500">2. Not Medical or Professional Advice</p>
+              <p>Nothing in this App constitutes medical advice, mental health counseling, diagnosis, or treatment. If you are experiencing mental health challenges, addiction, eating disorders, or any medical condition, please consult a qualified healthcare professional. <strong className="text-warm-900">Do not delay seeking professional help because of anything presented in this App.</strong></p>
+
+              <p className="font-semibold text-warm-500">3. Use at Your Own Risk</p>
+              <p>You use the App voluntarily and at your own risk. The developers and operators of Flo Habit Builder are not liable for any outcomes, decisions, or actions you take based on your use of the App.</p>
+
+              <p className="font-semibold text-warm-500">4. User Accounts & Data</p>
+              <p>You are responsible for maintaining the security of your account credentials. Your habit data is stored to provide the service. We do not sell your personal data to third parties.</p>
+
+              <p className="font-semibold text-warm-500">5. Acceptable Use</p>
+              <p>You agree not to misuse the App, attempt to gain unauthorized access to its systems, or use it for any unlawful purpose.</p>
+
+              <p className="font-semibold text-warm-500">6. Limitation of Liability</p>
+              <p>To the fullest extent permitted by law, Flo Habit Builder and its creators shall not be held liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of or inability to use the App.</p>
+
+              <p className="font-semibold text-warm-500">7. Termination</p>
+              <p>We may suspend or terminate your access to the App at our discretion, without notice, for conduct that violates these terms or is harmful to other users or the service.</p>
+            </div>
+
+            <label className="flex items-start gap-2 mb-4 cursor-pointer">
+              <input
+                type="checkbox"
+                id="tos-check"
+                className="mt-1 accent-sage-500"
+                onChange={(e) => e.target.checked}
+              />
+              <span className="text-sm text-warm-400">
+                I have read and agree to the <strong className="text-warm-900">Terms of Service</strong>
+              </span>
+            </label>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowTos(false)}
+                className="flex-1 py-2.5 rounded-xl border border-warm-100 text-warm-400 text-sm font-medium hover:bg-warm-100/30 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const checked = document.getElementById('tos-check').checked
+                  if (!checked) {
+                    setError('You must agree to the Terms of Service to create an account')
+                    setShowTos(false)
+                    return
+                  }
+                  handleTosAgree()
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-sage-500 text-white text-sm font-medium hover:bg-sage-600 transition-colors"
+              >
+                I Agree & Sign Up
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

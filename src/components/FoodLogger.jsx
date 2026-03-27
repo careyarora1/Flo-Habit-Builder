@@ -147,6 +147,9 @@ export default function FoodLogger({ habit, todayEntry, currentGoal, isBaseline,
       {showReflection && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-6">
           <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-xl">
+            <p className="text-base font-bold text-warm-900 mb-1 text-center" style={{ textDecoration: 'underline' }}>
+              Don't worry, this is totally normal
+            </p>
             <p className="text-lg font-bold text-warm-900 mb-2 text-center">
               What drained your energy today?
             </p>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { loadData, saveData, getToday, calcNextGoal, calcBaseline, getActiveHabit, addHabit, updateActiveHabit, getDevOffset, advanceDay, resetDevMode } from './store'
+import { loadData, saveData, getToday, calcNextGoal, calcBaseline, getActiveHabit, addHabit, updateActiveHabit, advanceDay, getDevOffset, resetDevMode } from './store'
 import { loadFromSupabase, saveToSupabase } from './lib/supabaseSync'
 import { useAuth } from './contexts/AuthContext'
 import AuthPage from './pages/AuthPage'
@@ -7,7 +7,23 @@ import Onboarding from './pages/Onboarding'
 import DailyView from './pages/DailyView'
 import Progress from './pages/Progress'
 
-const DEV_MODE = true // Keep on so instructor can step through days
+
+const DEV_MODE = import.meta.env.DEV
+
+function DevToolbar({ onAdvance, onReset, onFullReset, onSkipSignIn }) {
+  if (!DEV_MODE) return null
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-gray-900 text-white text-xs flex items-center justify-between px-4 py-2 z-[9999]">
+      <span>DEV · Day +{getDevOffset()} · "{getToday()}"</span>
+      <div className="flex gap-2">
+        {onSkipSignIn && <button onClick={onSkipSignIn} className="bg-blue-600 px-3 py-1 rounded">Skip Sign-in</button>}
+        {onAdvance && <button onClick={onAdvance} className="bg-blue-600 px-3 py-1 rounded">Next Day →</button>}
+        {onReset && <button onClick={onReset} className="bg-gray-600 px-3 py-1 rounded">Reset</button>}
+        {onFullReset && <button onClick={onFullReset} className="bg-red-600 px-3 py-1 rounded">Full Reset</button>}
+      </div>
+    </div>
+  )
+}
 
 function BridgeCars() {
   return (
@@ -23,50 +39,6 @@ function BridgeCars() {
   )
 }
 
-function DevToolbar({ onAdvance, onReset, onFullReset, onSkipSignIn }) {
-  if (!DEV_MODE) return null
-  return (
-    <div className="fixed bottom-0 left-0 right-0 bg-gray-900 text-white px-4 py-2 flex items-center justify-between text-xs z-50">
-      <span className="font-mono">
-        DEV · Day +{getDevOffset()} · "{getToday()}"
-      </span>
-      <div className="flex gap-2">
-        {onSkipSignIn && (
-          <button
-            onClick={onSkipSignIn}
-            className="bg-green-700 hover:bg-green-600 px-3 py-1 rounded font-medium"
-          >
-            Skip Sign-in
-          </button>
-        )}
-        {onAdvance && (
-          <button
-            onClick={onAdvance}
-            className="bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded font-medium"
-          >
-            Next Day →
-          </button>
-        )}
-        {onReset && (
-          <button
-            onClick={onReset}
-            className="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded font-medium"
-          >
-            Reset
-          </button>
-        )}
-        {onFullReset && (
-          <button
-            onClick={onFullReset}
-            className="bg-red-700 hover:bg-red-600 px-3 py-1 rounded font-medium"
-          >
-            Full Reset
-          </button>
-        )}
-      </div>
-    </div>
-  )
-}
 
 function HabitList({ habits, onSelect, onAdd, onDelete }) {
   const [confirmDelete, setConfirmDelete] = useState(null)
@@ -264,15 +236,54 @@ function prevDay(dateStr) {
 
 function App() {
   const { user, loading: authLoading, signOut } = useAuth()
-  const [data, setData] = useState(loadData)
+  const [data, setData] = useState(null)
   const [view, setView] = useState('daily')
   const [addingNew, setAddingNew] = useState(false)
   const [viewingDate, setViewingDate] = useState(getToday())
-  const [devSkipAuth, setDevSkipAuth] = useState(false)
   const [, forceRender] = useState(0)
+  const [syncReady, setSyncReady] = useState(false)
   const saveTimer = useRef(null)
 
-  const activeHabit = getActiveHabit(data)
+  const [devSkipAuth, setDevSkipAuth] = useState(false)
+  const devAdvance = () => { advanceDay(); forceRender(n => n + 1) }
+  const devReset = () => { resetDevMode(); setData({ habits: [], activeHabitId: null }); setAddingNew(false); setViewingDate(getToday()); forceRender(n => n + 1) }
+  const devFullReset = async () => { resetDevMode(); localStorage.clear(); if (signOut) await signOut(); window.location.reload() }
+
+  const activeHabit = data ? getActiveHabit(data) : null
+
+  // On login, load cloud data first, fall back to localStorage
+  useEffect(() => {
+    if (!user) {
+      setData(null)
+      setSyncReady(false)
+      return
+    }
+
+    loadFromSupabase(user.id).then(cloudData => {
+      const localData = loadData()
+
+      if (cloudData && cloudData.habits && cloudData.habits.length > 0) {
+        // Cloud has data — use it as the source of truth
+        // Also merge in any local-only habits (created offline on this device)
+        const cloudIds = new Set(cloudData.habits.map(h => h.id))
+        const localOnly = (localData.habits || []).filter(h => !cloudIds.has(h.id))
+        const merged = {
+          ...cloudData,
+          habits: [...cloudData.habits, ...localOnly],
+        }
+        setData(merged)
+        saveData(merged)
+      } else {
+        // No cloud data — start fresh (don't use stale localStorage from another session)
+        setData({ habits: [], activeHabitId: null })
+      }
+      setSyncReady(true)
+    }).catch(() => {
+      // Network error — use localStorage as fallback
+      setData(loadData())
+      setSyncReady(true)
+    })
+  }, [user?.id])
 
   // Keep viewingDate in sync when habit changes
   useEffect(() => {
@@ -281,34 +292,32 @@ function App() {
     }
   }, [activeHabit?.id])
 
-  // On mount, try loading from Supabase (cloud data takes priority if it has habits)
+  // Save to localStorage + Supabase whenever data changes (only after initial sync)
   useEffect(() => {
-    if (!user) return
-    loadFromSupabase(user.id).then(cloudData => {
-      if (cloudData && cloudData.habits && cloudData.habits.length > 0) {
-        setData(cloudData)
-        saveData(cloudData) // sync to localStorage too
-      }
-    }).catch(() => {}) // silently fail — localStorage is the fallback
-  }, [user?.id])
-
-  // Save to localStorage immediately, debounce Supabase saves
-  useEffect(() => {
+    if (!data || !syncReady) return
     saveData(data)
     if (!user) return
     clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
-      saveToSupabase(user.id, data).catch(() => {})
+      saveToSupabase(user.id, data)
     }, 1000)
   }, [data])
 
-  const devAdvance = () => { advanceDay(); forceRender(n => n + 1) }
-  const devReset = () => { resetDevMode(); setData({ habits: [], activeHabitId: null }); setAddingNew(false); setViewingDate(getToday()); forceRender(n => n + 1) }
-  const devFullReset = async () => { resetDevMode(); localStorage.clear(); if (signOut) await signOut(); window.location.reload() }
+  // Flush save to Supabase immediately before signing out
+  const handleSignOut = async () => {
+    if (user && data && syncReady) {
+      clearTimeout(saveTimer.current)
+      console.log('[Sync] Flushing save before sign out...')
+      await saveToSupabase(user.id, data)
+    }
+    saveData({ habits: [], activeHabitId: null }) // clear localStorage so stale data doesn't interfere
+    await signOut()
+  }
 
-  // Show auth page if not logged in
-  if (authLoading) return <div className="min-h-screen bg-warm-50 flex items-center justify-center"><p className="text-warm-400">Loading...</p><DevToolbar /></div>
-  if (!user && !devSkipAuth) return <><BridgeCars /><AuthPage /><DevToolbar onSkipSignIn={() => setDevSkipAuth(true)} onFullReset={devFullReset} /></>
+  // Show auth page if not logged in, show loading while syncing
+  if (authLoading) return <div className="min-h-screen bg-warm-50 flex items-center justify-center"><p className="text-warm-400">Loading...</p></div>
+  if (!user) return <><BridgeCars /><AuthPage /></>
+  if (!syncReady) return <><BridgeCars /><div className="min-h-screen flex items-center justify-center"><p className="text-warm-400">Syncing your data...</p></div></>
 
   const update = (changes) => {
     setData(prev => ({ ...prev, ...changes }))
@@ -343,10 +352,22 @@ function App() {
     setAddingNew(false)
   }
 
+  const SignOutButton = () => (
+    <button
+      onClick={handleSignOut}
+      className="fixed top-4 right-4 z-50 w-10 h-10 flex items-center justify-center rounded-full text-warm-500 hover:bg-warm-100/30 transition-colors"
+      title="Sign out"
+      style={{ backdropFilter: 'blur(8px)', background: 'rgba(15, 23, 41, 0.4)' }}
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </button>
+  )
+
   // No habits yet, or adding a new one → show onboarding
   if (data.habits.length === 0 || addingNew) {
     return <>
       <BridgeCars />
+      <SignOutButton />
       <Onboarding
         key={data.habits.length === 0 ? 'fresh' : 'add'}
         startStep={data.habits.length === 0 ? 0 : 1}
@@ -358,7 +379,7 @@ function App() {
           setViewingDate(getToday())
         }}
       />
-      <DevToolbar onAdvance={devAdvance} onReset={devReset} onFullReset={devFullReset} />
+
     </>
   }
 
@@ -366,6 +387,7 @@ function App() {
   if (!activeHabit) {
     return <>
       <BridgeCars />
+      <SignOutButton />
       <HabitList
         habits={data.habits}
         onSelect={(id) => {
@@ -382,7 +404,7 @@ function App() {
           }))
         }}
       />
-      <DevToolbar onAdvance={devAdvance} onReset={devReset} onFullReset={devFullReset} />
+
     </>
   }
 
@@ -392,12 +414,13 @@ function App() {
     const avg = calcBaseline(activeHabit.entries)
     return <>
       <BridgeCars />
+      <SignOutButton />
       <BaselineComplete
         habit={activeHabit}
         avg={avg}
         onStart={(userGoal) => { handleActivate(userGoal); setViewingDate(getToday()) }}
       />
-      <DevToolbar onAdvance={devAdvance} onReset={devReset} onFullReset={devFullReset} />
+
     </>
   }
 
@@ -442,7 +465,7 @@ function App() {
           </button>
         </div>
         <button
-          onClick={signOut}
+          onClick={handleSignOut}
           className="w-10 h-10 flex items-center justify-center rounded-full text-warm-500 hover:bg-warm-100 transition-colors"
           title="Sign out"
         >
@@ -542,7 +565,7 @@ function App() {
         />
       )}
 
-      <DevToolbar onAdvance={devAdvance} onReset={devReset} onFullReset={devFullReset} />
+
     </div>
   )
 }
