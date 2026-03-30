@@ -40,10 +40,95 @@ function BridgeCars() {
 }
 
 
-function HabitList({ habits, onSelect, onAdd, onDelete }) {
+function HabitList({ habits, onSelect, onAdd, onDelete, userId }) {
   const [confirmDelete, setConfirmDelete] = useState(null)
+  const [showFeedback, setShowFeedback] = useState(false)
+  const [feedbackText, setFeedbackText] = useState('')
+  const [feedbackSent, setFeedbackSent] = useState(false)
+  const [feedbackType, setFeedbackType] = useState('suggestion')
+
+  const submitFeedback = async () => {
+    if (!feedbackText.trim()) return
+    try {
+      const { supabase } = await import('./lib/supabase')
+      if (supabase) {
+        await supabase.from('feedback').insert({
+          user_id: userId || null,
+          type: feedbackType,
+          message: feedbackText.trim(),
+          created_at: new Date().toISOString(),
+        })
+      }
+    } catch (e) { console.error('Feedback submit error:', e) }
+    setFeedbackSent(true)
+    setTimeout(() => { setShowFeedback(false); setFeedbackSent(false); setFeedbackText(''); setFeedbackType('suggestion') }, 2000)
+  }
+
   return (
     <div className="min-h-screen bg-warm-50 flex flex-col items-center p-6 pt-16">
+      {/* Feedback button */}
+      <button
+        onClick={() => setShowFeedback(true)}
+        className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-sage-500 text-white shadow-lg hover:bg-sage-600 transition-colors flex items-center justify-center"
+        title="Send feedback"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </button>
+
+      {/* Feedback modal */}
+      {showFeedback && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="steel-plate rounded-2xl p-6 max-w-sm w-full space-y-4">
+            {feedbackSent ? (
+              <div className="text-center py-6">
+                <p className="text-2xl mb-2">&#10003;</p>
+                <p className="text-warm-900 font-medium">Thank you for your feedback!</p>
+              </div>
+            ) : (<>
+              <h3 className="text-lg font-semibold text-warm-900 text-center">Send Feedback</h3>
+              <p className="text-warm-400 text-sm text-center">Help us improve Flo. Suggest a feature or let us know what could be better.</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setFeedbackType('suggestion')}
+                  className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${feedbackType === 'suggestion' ? 'bg-sage-500 text-white' : 'bg-warm-50 text-warm-400'}`}
+                >
+                  Suggestion
+                </button>
+                <button
+                  onClick={() => setFeedbackType('issue')}
+                  className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${feedbackType === 'issue' ? 'bg-sage-500 text-white' : 'bg-warm-50 text-warm-400'}`}
+                >
+                  Issue
+                </button>
+              </div>
+              <textarea
+                value={feedbackText}
+                onChange={e => setFeedbackText(e.target.value)}
+                placeholder={feedbackType === 'suggestion' ? "What feature would you love to see?" : "What's not working right?"}
+                rows={4}
+                autoFocus
+                className="w-full p-3 rounded-xl bg-warm-50 text-warm-900 placeholder:text-warm-300 outline-none focus:border-sage-400 resize-none text-sm"
+              />
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setShowFeedback(false); setFeedbackText(''); setFeedbackType('suggestion') }}
+                  className="flex-1 py-2.5 rounded-xl border border-warm-100 text-warm-400 text-sm font-medium hover:bg-warm-100/30 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={submitFeedback}
+                  disabled={!feedbackText.trim()}
+                  className="flex-1 py-2.5 rounded-xl bg-sage-500 text-white text-sm font-medium hover:bg-sage-600 transition-colors disabled:opacity-40"
+                >
+                  Send
+                </button>
+              </div>
+            </>)}
+          </div>
+        </div>
+      )}
+
       {/* Delete confirmation modal */}
       {confirmDelete && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-40 p-6">
@@ -390,6 +475,7 @@ function App() {
       <SignOutButton />
       <HabitList
         habits={data.habits}
+        userId={user?.id}
         onSelect={(id) => {
           update({ activeHabitId: id })
           const habit = data.habits.find(h => h.id === id)
