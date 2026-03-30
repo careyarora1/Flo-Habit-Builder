@@ -55,6 +55,20 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen bg-warm-50 flex items-center justify-center p-6">
+      {/* Chrome recommendation badge */}
+      <div className="fixed top-4 left-4 flex items-center gap-2 z-50" style={{ opacity: 0.75 }}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 192 192">
+          <circle cx="96" cy="96" r="96" fill="none"/>
+          <path fill="#EA4335" d="M96 33c20.4 0 38.7 9.6 50.3 24.5H96c-21.2 0-38.5 17.2-38.5 38.5 0 6.5 1.6 12.6 4.5 18L31.2 60.5C46.3 43.5 69.8 33 96 33z"/>
+          <path fill="#FBBC05" d="M31.2 60.5L62 114c-2.9-5.4-4.5-11.5-4.5-18 0-15.2 8.8-28.3 21.6-34.5H33.8C30.5 67.5 28 74 27 81c-2.2 10-1.5 20.6 2.2 30.5l31-53.5-.4-.7c.5-.6.9-1.2 1.4-1.8z"/>
+          <path fill="#34A853" d="M96 159c-26.2 0-49.7-10.5-64.8-27.5L62 78c-2.9 5.4-4.5 11.5-4.5 18 0 21.2 17.2 38.5 38.5 38.5 6.5 0 12.6-1.6 18-4.5l30.8 53.5C131.3 155 114.3 159 96 159z"/>
+          <path fill="#4285F4" d="M146.3 57.5C158.5 72.7 165 92 161 112c-3 15-11.5 28.3-23.2 37.5L107 96l39.3-38.5z"/>
+          <circle cx="96" cy="96" r="38.5" fill="#fff"/>
+          <circle cx="96" cy="96" r="30" fill="#4285F4"/>
+        </svg>
+        <span className="text-warm-400 text-xs">Works best with the Chrome App</span>
+      </div>
+
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-3">
           <div style={{ position: 'relative', display: 'inline-block' }}>
