@@ -443,26 +443,19 @@ function App() {
           <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
         </button>
         <div className="flex gap-1">
-          <button
-            onClick={() => setView('daily')}
-            className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-              view === 'daily'
-                ? 'bg-sage-500 text-white shadow-md'
-                : 'text-warm-600 hover:bg-warm-100'
-            }`}
-          >
-            Today
-          </button>
-          <button
-            onClick={() => setView('progress')}
-            className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-              view === 'progress'
-                ? 'bg-sage-500 text-white shadow-md'
-                : 'text-warm-600 hover:bg-warm-100'
-            }`}
-          >
-            Progress
-          </button>
+          {['daily', 'progress', 'notes'].map(v => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                view === v
+                  ? 'bg-sage-500 text-white shadow-md'
+                  : 'text-warm-600 hover:bg-warm-100'
+              }`}
+            >
+              {v === 'daily' ? 'Today' : v === 'progress' ? 'Progress' : 'Notes'}
+            </button>
+          ))}
         </div>
         <button
           onClick={handleSignOut}
@@ -473,7 +466,21 @@ function App() {
         </button>
       </nav>
 
-      {view === 'daily' ? (
+      {view === 'notes' ? (
+        <div className="flex flex-col items-center p-6 pb-20">
+          <div className="max-w-lg w-full">
+            <textarea
+              value={typeof activeHabit.notes === 'string' ? activeHabit.notes : ''}
+              onChange={e => {
+                updateHabit({ notes: e.target.value })
+              }}
+              placeholder="Write anything... thoughts, reflections, plans, whatever's on your mind."
+              className="w-full min-h-[70vh] bg-transparent text-warm-900 placeholder:text-warm-400 outline-none resize-none text-base leading-relaxed"
+              style={{ caretColor: '#4e7f4e' }}
+            />
+          </div>
+        </div>
+      ) : view === 'daily' ? (
         <DailyView
           key={viewingDate}
           data={{ ...data, habit: activeHabit, phase: activeHabit.phase, currentGoal: activeHabit.currentGoal, entries: activeHabit.entries }}
