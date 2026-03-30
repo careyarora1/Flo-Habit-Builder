@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { getMessage } from '../messages'
 import JunkfoodGuide from '../components/JunkfoodGuide'
 
@@ -22,6 +22,42 @@ export default function DailyView({ data, viewingDate, onLog, onFinalize, onActi
   const [showSuccessReflection, setShowSuccessReflection] = useState(false)
   const [successNote, setSuccessNote] = useState('')
   const [showScoringGuide, setShowScoringGuide] = useState(false)
+  const [undoValue, setUndoValue] = useState(null)
+  const [showUndo, setShowUndo] = useState(false)
+  const undoTimer = useRef(null)
+  const lastCommittedValue = useRef(entry?.actual?.toString() || '')
+
+  // Track when user "commits" a change (clicks off the input or uses +/- buttons)
+  const commitChange = (newValue) => {
+    const prev = lastCommittedValue.current
+    if (prev !== '' && prev !== String(newValue)) {
+      setUndoValue(prev)
+      setShowUndo(true)
+      clearTimeout(undoTimer.current)
+      undoTimer.current = setTimeout(() => {
+        setShowUndo(false)
+        setUndoValue(null)
+      }, 30000)
+    }
+    lastCommittedValue.current = String(newValue)
+  }
+
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => clearTimeout(undoTimer.current)
+  }, [])
+
+  const handleUndo = () => {
+    if (undoValue != null) {
+      setInputValue(undoValue)
+      const val = Number(undoValue)
+      if (!isNaN(val) && val >= 0) onLog(val, viewingDate)
+      lastCommittedValue.current = undoValue
+      setShowUndo(false)
+      setUndoValue(null)
+      clearTimeout(undoTimer.current)
+    }
+  }
 
   const layers = data.habit?.layers || []
   const hasLayers = layers.length > 0
@@ -386,46 +422,65 @@ export default function DailyView({ data, viewingDate, onLog, onFinalize, onActi
                 </div>
               ) : (
                 <>
-                  <div className="flex items-center justify-center gap-3">
-                    <button
-                      onClick={() => {
-                        const cur = Math.round((Number(inputValue) || 0) * 10) / 10
-                        const next = Math.max(0, Math.round((cur - 0.1) * 10) / 10)
-                        setInputValue(String(next))
-                        onLog(next, viewingDate)
-                      }}
-                      className="w-10 h-10 rounded-full border-2 border-sage-500 text-sage-500 hover:bg-sage-500 hover:text-warm-50 transition-colors text-xl font-bold flex items-center justify-center shadow-sm"
-                    >
-                      −
-                    </button>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      value={inputValue}
-                      onChange={e => {
-                        const raw = e.target.value
-                        if (raw === '' || /^\d*\.?\d{0,3}$/.test(raw)) {
-                          setInputValue(raw)
-                          const val = Math.round(Number(raw) * 1000) / 1000
-                          if (!isNaN(val) && val >= 0 && raw !== '') {
-                            onLog(val, viewingDate)
+                  <div className="relative">
+                    {showUndo && (
+                      <button
+                        onClick={handleUndo}
+                        className="absolute -top-8 left-0 flex items-center gap-1 text-xs text-sage-400 hover:text-sage-300 transition-colors animate-fade-in"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                        Undo
+                      </button>
+                    )}
+                    <div className="flex items-center justify-center gap-3">
+                      <button
+                        onClick={() => {
+                          const cur = Math.round((Number(inputValue) || 0) * 10) / 10
+                          const next = Math.max(0, Math.round((cur - 0.1) * 10) / 10)
+                          commitChange(next)
+                          setInputValue(String(next))
+                          onLog(next, viewingDate)
+                        }}
+                        className="w-10 h-10 rounded-full border-2 border-sage-500 text-sage-500 hover:bg-sage-500 hover:text-warm-50 transition-colors text-xl font-bold flex items-center justify-center shadow-sm"
+                      >
+                        −
+                      </button>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={inputValue}
+                        onChange={e => {
+                          const raw = e.target.value
+                          if (raw === '' || /^\d*\.?\d{0,3}$/.test(raw)) {
+                            setInputValue(raw)
+                            const val = Math.round(Number(raw) * 1000) / 1000
+                            if (!isNaN(val) && val >= 0 && raw !== '') {
+                              onLog(val, viewingDate)
+                            }
                           }
-                        }
-                      }}
-                      placeholder="0"
-                      className="text-5xl font-bold text-center w-32 bg-transparent border-b-3 border-warm-200 focus:border-sage-500 outline-none text-warm-900 pb-2 transition-colors"
-                    />
-                    <button
-                      onClick={() => {
-                        const cur = Math.round((Number(inputValue) || 0) * 10) / 10
-                        const next = Math.round((cur + 0.1) * 10) / 10
-                        setInputValue(String(next))
-                        onLog(next, viewingDate)
-                      }}
-                      className="w-10 h-10 rounded-full border-2 border-sage-500 text-sage-500 hover:bg-sage-500 hover:text-warm-50 transition-colors text-xl font-bold flex items-center justify-center shadow-sm"
-                    >
-                      +
-                    </button>
+                        }}
+                        onBlur={() => {
+                          const val = Number(inputValue)
+                          if (!isNaN(val) && val >= 0 && inputValue !== '') {
+                            commitChange(val)
+                          }
+                        }}
+                        placeholder="0"
+                        className="text-5xl font-bold text-center w-32 bg-transparent border-b-3 border-warm-200 focus:border-sage-500 outline-none text-warm-900 pb-2 transition-colors"
+                      />
+                      <button
+                        onClick={() => {
+                          const cur = Math.round((Number(inputValue) || 0) * 10) / 10
+                          const next = Math.round((cur + 0.1) * 10) / 10
+                          commitChange(next)
+                          setInputValue(String(next))
+                          onLog(next, viewingDate)
+                        }}
+                        className="w-10 h-10 rounded-full border-2 border-sage-500 text-sage-500 hover:bg-sage-500 hover:text-warm-50 transition-colors text-xl font-bold flex items-center justify-center shadow-sm"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
                   <p className="text-warm-400 mt-2 mb-6">{data.habit.unit}</p>
                 </>
