@@ -385,8 +385,28 @@ function App() {
     clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
       saveToSupabase(user.id, data)
-    }, 1000)
+    }, 300)
   }, [data])
+
+  // Flush pending saves when user leaves the page (closing tab, switching apps on mobile)
+  useEffect(() => {
+    const flush = () => {
+      if (user && data && syncReady) {
+        clearTimeout(saveTimer.current)
+        // Use sendBeacon for reliability on page close
+        const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/rpc/ping`
+        // Fall back to direct save
+        saveToSupabase(user.id, data).catch(() => {})
+      }
+    }
+    window.addEventListener('beforeunload', flush)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') flush()
+    })
+    return () => {
+      window.removeEventListener('beforeunload', flush)
+    }
+  }, [user?.id, data, syncReady])
 
   // Flush save to Supabase immediately before signing out
   const handleSignOut = async () => {
@@ -643,11 +663,17 @@ function App() {
             }
           }}
           onFinalize={(done, note, date) => {
-            updateHabit({
+            const newData = updateActiveHabit(data, {
               entries: activeHabit.entries.map(e =>
                 e.date === date ? { ...e, finalized: done, ...(note !== undefined ? { note } : {}) } : e
               ),
             })
+            setData(newData)
+            // Immediate save on finalize — don't rely on debounce
+            if (user) {
+              clearTimeout(saveTimer.current)
+              saveToSupabase(user.id, newData).catch(() => {})
+            }
           }}
           onActivate={handleActivate}
         />
