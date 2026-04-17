@@ -609,71 +609,82 @@ function App() {
             setViewingDate(isBaselinePhase ? nextDay(viewingDate) : next)
           }}
           onSetGoal={(difficulty, goal, date, layerGoals) => {
-            // Save difficulty on yesterday's entry, set today's goal
-            const sorted = [...activeHabit.entries].sort((a, b) => a.date.localeCompare(b.date))
-            const prevEntry = sorted.filter(e => e.date < date).pop()
-            let updatedEntries = [...activeHabit.entries]
-            if (prevEntry) {
-              updatedEntries = updatedEntries.map(e =>
-                e.date === prevEntry.date ? { ...e, difficulty } : e
-              )
-            }
-            // Build layerData with goals if layers exist
-            const layerData = layerGoals ? Object.fromEntries(
-              Object.entries(layerGoals).map(([id, g]) => [id, { goal: g, actual: null }])
-            ) : undefined
-            // Create today's entry with the chosen goal
-            const existing = updatedEntries.find(e => e.date === date)
-            if (existing) {
-              updatedEntries = updatedEntries.map(e =>
-                e.date === date ? { ...e, goal, ...(layerData ? { layerData } : {}) } : e
-              )
-            } else {
-              updatedEntries.push({ date, goal, actual: null, difficulty: null, finalized: false, ...(layerData ? { layerData } : {}) })
-            }
-            updateHabit({ entries: updatedEntries, currentGoal: goal, ...(layerGoals ? { layerGoals } : {}) })
+            setData(prev => {
+              const habit = prev.habits.find(h => h.id === prev.activeHabitId)
+              if (!habit) return prev
+              // Save difficulty on yesterday's entry, set today's goal
+              const sorted = [...habit.entries].sort((a, b) => a.date.localeCompare(b.date))
+              const prevEntry = sorted.filter(e => e.date < date).pop()
+              let updatedEntries = [...habit.entries]
+              if (prevEntry) {
+                updatedEntries = updatedEntries.map(e =>
+                  e.date === prevEntry.date ? { ...e, difficulty } : e
+                )
+              }
+              const layerData = layerGoals ? Object.fromEntries(
+                Object.entries(layerGoals).map(([id, g]) => [id, { goal: g, actual: null }])
+              ) : undefined
+              const existing = updatedEntries.find(e => e.date === date)
+              if (existing) {
+                updatedEntries = updatedEntries.map(e =>
+                  e.date === date ? { ...e, goal, ...(layerData ? { layerData } : {}) } : e
+                )
+              } else {
+                updatedEntries.push({ date, goal, actual: null, difficulty: null, finalized: false, ...(layerData ? { layerData } : {}) })
+              }
+              return updateActiveHabit(prev, {
+                entries: updatedEntries,
+                currentGoal: goal,
+                ...(layerGoals ? { layerGoals } : {}),
+              })
+            })
           }}
           onLog={(actual, date, newLayerData) => {
-            const existing = activeHabit.entries.find(e => e.date === date)
-            if (existing) {
-              // Merge new layer actuals with existing layer goals
-              let mergedLayerData = existing.layerData
-              if (newLayerData) {
-                mergedLayerData = { ...existing.layerData }
-                for (const [id, vals] of Object.entries(newLayerData)) {
-                  mergedLayerData[id] = { ...mergedLayerData[id], ...vals }
+            setData(prev => {
+              const habit = prev.habits.find(h => h.id === prev.activeHabitId)
+              if (!habit) return prev
+              const existing = habit.entries.find(e => e.date === date)
+              let newEntries
+              if (existing) {
+                let mergedLayerData = existing.layerData
+                if (newLayerData) {
+                  mergedLayerData = { ...existing.layerData }
+                  for (const [id, vals] of Object.entries(newLayerData)) {
+                    mergedLayerData[id] = { ...mergedLayerData[id], ...vals }
+                  }
                 }
-              }
-              updateHabit({
-                entries: activeHabit.entries.map(e =>
+                newEntries = habit.entries.map(e =>
                   e.date === date ? { ...e, actual, finalized: actual == null ? false : e.finalized, ...(mergedLayerData ? { layerData: mergedLayerData } : {}) } : e
-                ),
-              })
-            } else {
-              updateHabit({
-                entries: [...activeHabit.entries, {
+                )
+              } else {
+                newEntries = [...habit.entries, {
                   date,
-                  goal: activeHabit.currentGoal,
+                  goal: habit.currentGoal,
                   actual,
                   difficulty: null,
                   finalized: false,
                   ...(newLayerData ? { layerData: newLayerData } : {}),
-                }],
-              })
-            }
+                }]
+              }
+              return updateActiveHabit(prev, { entries: newEntries })
+            })
           }}
           onFinalize={(done, note, date) => {
-            const newData = updateActiveHabit(data, {
-              entries: activeHabit.entries.map(e =>
-                e.date === date ? { ...e, finalized: done, ...(note !== undefined ? { note } : {}) } : e
-              ),
+            setData(prev => {
+              const habit = prev.habits.find(h => h.id === prev.activeHabitId)
+              if (!habit) return prev
+              const newData = updateActiveHabit(prev, {
+                entries: habit.entries.map(e =>
+                  e.date === date ? { ...e, finalized: done, ...(note !== undefined ? { note } : {}) } : e
+                ),
+              })
+              // Immediate save on finalize — don't rely on debounce
+              if (user) {
+                clearTimeout(saveTimer.current)
+                saveToSupabase(user.id, newData).catch(() => {})
+              }
+              return newData
             })
-            setData(newData)
-            // Immediate save on finalize — don't rely on debounce
-            if (user) {
-              clearTimeout(saveTimer.current)
-              saveToSupabase(user.id, newData).catch(() => {})
-            }
           }}
           onActivate={handleActivate}
         />
